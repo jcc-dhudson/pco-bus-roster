@@ -20,6 +20,7 @@ try:
     PCO_SECRET = os.environ['PCO_SECRET'] # source ~/pco-env-vars.sh
     PCO_OAUTH_CLIEND_ID = os.environ['PCO_OAUTH_CLIEND_ID']
     PCO_OAUTH_SECRET = os.environ['PCO_OAUTH_SECRET']
+    SELF_BASE_URL = os.environ['SELF_BASE_URL']
 except Exception as e:
     print(f"Must supply PCO_APP_ID, PCO_SECRET, PCO_OAUTH_CLIEND_ID, PCO_OAUTH_SECRET as environment vairables. - {e}")
     sys.exit(1)
@@ -28,7 +29,7 @@ except Exception as e:
 pco_auth = PlanningCenterClient(
     client_id=PCO_OAUTH_CLIEND_ID,
     client_secret=PCO_OAUTH_SECRET,
-    redirect_uri='https://jcc-bus-roster.azurewebsites.net/auth/callback'
+    redirect_uri= SELF_BASE_URL + '/auth/callback'
 )
 
 app = Flask(__name__,
