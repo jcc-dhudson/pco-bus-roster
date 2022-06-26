@@ -4,10 +4,9 @@ var $alertBtn = $('#alertBtn')
 
 window.operateEvents = {
     'click .checkin': function (e, value, row, index) {
-        
-      alert('You click like icon, row: ' + JSON.stringify(row))
-
-      console.log(value, row, index)
+        $.get("/checkin/" + row.id, function(data, status){
+            alert("Data: " + data + "\nStatus: " + status);
+        });
     }
   }
 
