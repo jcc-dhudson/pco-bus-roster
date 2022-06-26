@@ -22,6 +22,8 @@ app = Flask(__name__,
             static_url_path='', 
             static_folder='static',)
 
+logger(f"PCO_APP_ID: {PCO_APP_ID}")
+
 @app.route('/test')
 def test():
     global TEST_MSG
