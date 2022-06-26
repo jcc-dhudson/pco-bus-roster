@@ -2,3 +2,4 @@ pypco
 Flask
 requests_oauth2
 requests
+flask_socketio

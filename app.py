@@ -6,6 +6,8 @@ import requests
 from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template, request, send_from_directory, session, redirect
 from requests_oauth2 import OAuth2BearerToken, OAuth2
+from flask_socketio import SocketIO, emit
+
 
 TEST_MSG = 'hello world.'
 
@@ -101,6 +103,10 @@ def pco_oauth2callback():
     app.users[data.get("access_token")] = user
     print(f"users: {app.users}")
     return redirect("/")
+
+@socketio.on('connect')
+def test_connect():
+    socketio.emit('after connect', {'data':'test'})
 
 if __name__ == '__main__':
     app.run()
