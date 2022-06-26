@@ -52,7 +52,7 @@ def test():
 @app.route("/pco/")
 def pco_index():
     user = {}
-    print(f"users: {users}")
+    print(f"users: {app.users}")
     if not session.get("access_token") or session.get("access_token") not in app.users:
         print(session)
         return redirect("/auth/callback")
@@ -89,7 +89,7 @@ def pco_oauth2callback():
     user['passed_background_check'] = r['data']['attributes']['passed_background_check']
     user['self'] = r['data']['links']['self']
     app.users[data.get("access_token")] = user
-    print(f"users: {users}")
+    print(f"users: {app.users}")
     return redirect("/pco")
 
 if __name__ == '__main__':
