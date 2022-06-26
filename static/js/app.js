@@ -22,13 +22,7 @@ window.operateEvents = {
   function operateFormatter(value, row, index) {
     return [
       '<a rel="tooltip" title="Like" class="table-action like" href="javascript:void(0)" title="Like">',
-        '<i class="fa-solid fa-heart"></i>',
-      '</a>',
-      '<a rel="tooltip" title="Edit" class="table-action edit" href="javascript:void(0)" title="Edit">',
-        '<i class="fa-solid fa-edit"></i>',
-      '</a>',
-      '<a rel="tooltip" title="Remove" class="table-action remove" href="javascript:void(0)" title="Remove">',
-        '<i class="fa-solid fa-remove"></i>',
+        '<i style="font-size: 36px" class="fa-solid fa-circle-check"></i>',
       '</a>'
     ].join('')
   }
