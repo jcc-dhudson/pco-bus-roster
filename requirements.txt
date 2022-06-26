@@ -1,3 +1,4 @@
 pypco
 Flask
 requests_oauth2
+secrets

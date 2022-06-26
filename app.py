@@ -2,6 +2,7 @@ import sys
 import os
 import pypco
 import shelve
+import secrets
 from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template, request, send_from_directory, session, redirect
 from requests_oauth2 import OAuth2BearerToken, OAuth2
@@ -35,6 +36,7 @@ pco_auth = PlanningCenterClient(
 app = Flask(__name__,
             static_url_path='', 
             static_folder='static',)
+app.secret_key = secrets.token_urlsafe(32)
 
 print(f"PCO_APP_ID: {PCO_APP_ID}")
 
