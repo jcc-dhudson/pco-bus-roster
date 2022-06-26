@@ -39,6 +39,8 @@ app = Flask(__name__,
             static_folder='static',)
 app.secret_key = SELF_SESSION_SECRET
 
+app.users = {}
+
 print(f"PCO_APP_ID: {PCO_APP_ID}")
 
 @app.route('/test')
@@ -49,16 +51,14 @@ def test():
 
 @app.route("/pco/")
 def pco_index():
-    info = ""
+    user = {}
     if not session.get("access_token"):
         print(session)
         return redirect("/auth/callback")
-    with requests.Session() as s:
-        s.auth = OAuth2BearerToken(session["access_token"])
-        r = s.get("https://api.planningcenteronline.com/people/v2/me")
-    r.raise_for_status()
-    data = r.json()
-    return jsonify(data)
+        #s.auth = OAuth2BearerToken(session["access_token"])
+    user = app.users[session.get("access_token")]
+    
+    return jsonify(user)
 
 
 @app.route("/auth/callback")
@@ -76,8 +76,20 @@ def pco_oauth2callback():
         code=code,
         grant_type="authorization_code",
     )
-    print(data)
     session["access_token"] = data.get("access_token")
+    s.auth = OAuth2BearerToken(data.get("access_token"))
+    r = s.get("https://api.planningcenteronline.com/people/v2/me")
+    r.raise_for_status()
+
+    user = {}
+    user['id'] = r['data']['id']
+    user['name'] = r['data']['attributes']['name']
+    user['first_name'] = r['data']['attributes']['first_name']
+    user['avatar'] = r['data']['attributes']['avatar']
+    user['passed_background_check'] = r['data']['attributes']['passed_background_check']
+    user['self'] = r['data']['links']['self']
+    app.users[data.get("access_token")] = user
+
     return redirect("/pco")
 
 if __name__ == '__main__':
