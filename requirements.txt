@@ -1,2 +1,3 @@
 pypco
 Flask
+requests_oauth2
