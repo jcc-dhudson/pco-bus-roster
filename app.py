@@ -11,6 +11,10 @@ from flask_socketio import SocketIO, emit
 TEST_MSG = 'hello world.'
 LIST_ID = '2287128'
 
+DEBUG = False
+if 'BUS_ROSTER_DEBUG' in os.environ:
+    DEBUG = True
+
 # from: https://github.com/pastorhudson/PCO-oauth2
 class PlanningCenterClient(OAuth2):
     site = "https://api.planningcenteronline.com"
@@ -61,8 +65,8 @@ def auth_me():
 
 @app.route('/list')
 def list():
-    #if not session.get("access_token") or session.get("access_token") not in app.users:
-    #    return redirect("/auth/callback")
+    if not session.get("access_token") or session.get("access_token") not in app.users or DEBUG:
+        return redirect("/auth/callback")
     listResp = pco.get(f"/people/v2/lists/{LIST_ID}?include=people")
     if 'included' not in listResp:
         logger(f"No data for list {listId} from PCO.")
