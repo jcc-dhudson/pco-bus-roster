@@ -47,6 +47,7 @@ def test():
 def pco_index():
     info = ""
     if not session.get("access_token"):
+        print(session)
         return redirect("/auth/callback")
     with requests.Session() as s:
         s.auth = OAuth2BearerToken(session["access_token"])
@@ -71,8 +72,9 @@ def pco_oauth2callback():
         code=code,
         grant_type="authorization_code",
     )
+    print(data)
     session["access_token"] = data.get("access_token")
-    return redirect("/pco/")
+    return redirect("/pco")
 
 if __name__ == '__main__':
     app.run()
