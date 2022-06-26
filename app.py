@@ -126,8 +126,8 @@ def pco_oauth2callback():
     authorized = False
     listResp = pco.get(f"/people/v2/lists/{LIST_ID}?include=people")
     for person in listResp['included']:
-        print(d['data']['attributes']['name'])
-        if person['id'] == d['data']['id'] and d['data']['attributes']['passed_background_check'] == 'True':
+        print(f"{d['data']['attributes']['name']}: {person['id']} {d['data']['id']} -- background: {person['attributes']['passed_background_check']}")
+        if person['id'] == d['data']['id'] and person['attributes']['passed_background_check'] == 'True':
             print(f"user {d['data']['attributes']['name']} is authorized.")
             authorized = True
 
