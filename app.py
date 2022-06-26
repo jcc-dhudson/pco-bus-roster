@@ -8,8 +8,8 @@ from flask import Flask, jsonify, render_template, request, send_from_directory,
 from requests_oauth2 import OAuth2BearerToken, OAuth2
 from flask_socketio import SocketIO, emit
 
-
 TEST_MSG = 'hello world.'
+LIST_ID = '2287128'
 
 # from: https://github.com/pastorhudson/PCO-oauth2
 class PlanningCenterClient(OAuth2):
@@ -43,13 +43,13 @@ app.secret_key = SELF_SESSION_SECRET
 app.users = {}
 socketio = SocketIO(app)
 
-print(f"PCO_APP_ID: {PCO_APP_ID}")
+pco = pypco.PCO(PCO_APP_ID, PCO_SECRET)
 
 @app.route('/')
 def index():
-    #if not session.get("access_token") or session.get("access_token") not in app.users:
-    #    return redirect("/auth/callback")
-    #user = app.users[session.get("access_token")]
+    if not session.get("access_token") or session.get("access_token") not in app.users:
+        return redirect("/auth/callback")
+    user = app.users[session.get("access_token")]
     return app.send_static_file('index.html')
 
 @app.route('/auth/me')
@@ -58,6 +58,23 @@ def auth_me():
         return redirect("/auth/callback")
     user = app.users[session.get("access_token")]
     return jsonify(user)
+
+@app.route('/list')
+def list():
+    #if not session.get("access_token") or session.get("access_token") not in app.users:
+    #    return redirect("/auth/callback")
+    listResp = pco.get(f"/people/v2/lists/{LIST_ID}?include=people")
+    if 'included' not in listResp:
+        logger(f"No data for list {listId} from PCO.")
+
+    out = []
+    for person in listResp['included']:
+        outP = {}
+        outP['id'] = person['id']
+        outP['name'] = person['attributes']['name']
+        outP['avatar'] = person['attributes']['avatar']
+        out.append(outP)
+    return jsonify(out)
 
 @app.route("/pco/")
 def pco_index():
