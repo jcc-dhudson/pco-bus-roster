@@ -28,6 +28,7 @@ logger(f"PCO_APP_ID: {PCO_APP_ID}")
 @app.route('/test')
 def test():
     global TEST_MSG
+    logger(f"remote ip: {request.remote_addr}")
     return TEST_MSG
 
 if __name__ == '__main__':
