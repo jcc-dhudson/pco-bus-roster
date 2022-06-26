@@ -29,7 +29,7 @@ logger(f"PCO_APP_ID: {PCO_APP_ID}")
 def test():
     global TEST_MSG
     logger(f"remote ip: {request.remote_addr}")
-    return TEST_MSG
+    return f"{TEST_MSG} {request.remote_addr}"
 
 if __name__ == '__main__':
     app.run()
