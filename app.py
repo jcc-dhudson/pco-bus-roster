@@ -2,6 +2,7 @@ import sys
 import os
 import pypco
 import shelve
+import requests
 from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template, request, send_from_directory, session, redirect
 from requests_oauth2 import OAuth2BearerToken, OAuth2
