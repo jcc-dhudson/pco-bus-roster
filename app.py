@@ -82,6 +82,13 @@ def list():
         out.append(outP)
     return jsonify(out)
 
+@app.route('/checkin')
+def checkin():
+    if not session.get("access_token") or session.get("access_token") not in app.users:
+        if not DEBUG:
+            return redirect("/auth/callback")
+    return 'ok'
+
 @app.route("/pco/")
 def pco_index():
     user = {}
@@ -116,11 +123,12 @@ def pco_oauth2callback():
     r.raise_for_status()
     
     d = r.json()
-
     authorized = False
     listResp = pco.get(f"/people/v2/lists/{LIST_ID}?include=people")
     for person in listResp['included']:
+        print(person)
         if person['id'] == d['data']['id'] and d['data']['attributes']['passed_background_check'] == 'true':
+            print(f"user {d['data']['attributes']['name']} is authorized.")
             authorized = True
 
     if authorized:
