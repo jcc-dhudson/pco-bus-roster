@@ -28,7 +28,7 @@ except Exception as e:
 pco_auth = PlanningCenterClient(
     client_id=PCO_OAUTH_CLIEND_ID,
     client_secret=PCO_OAUTH_SECRET,
-    redirect_uri='https://jcc-bus-roster.azurewebsites.net/pco'
+    redirect_uri='https://jcc-bus-roster.azurewebsites.net/auth/callback'
 )
 
 app = Flask(__name__,
