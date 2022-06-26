@@ -2,7 +2,6 @@ import sys
 import os
 import pypco
 import shelve
-import secrets
 from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template, request, send_from_directory, session, redirect
 from requests_oauth2 import OAuth2BearerToken, OAuth2
@@ -22,6 +21,7 @@ try:
     PCO_OAUTH_CLIEND_ID = os.environ['PCO_OAUTH_CLIEND_ID']
     PCO_OAUTH_SECRET = os.environ['PCO_OAUTH_SECRET']
     SELF_BASE_URL = os.environ['SELF_BASE_URL']
+    SELF_SESSION_SECRET = os.environ['SELF_SESSION_SECRET']
 except Exception as e:
     print(f"Must supply PCO_APP_ID, PCO_SECRET, PCO_OAUTH_CLIEND_ID, PCO_OAUTH_SECRET as environment vairables. - {e}")
     sys.exit(1)
@@ -36,7 +36,7 @@ pco_auth = PlanningCenterClient(
 app = Flask(__name__,
             static_url_path='', 
             static_folder='static',)
-app.secret_key = secrets.token_urlsafe(32)
+app.secret_key = SELF_SESSION_SECRET
 
 print(f"PCO_APP_ID: {PCO_APP_ID}")
 
@@ -54,7 +54,7 @@ def pco_index():
         return redirect("/auth/callback")
     with requests.Session() as s:
         s.auth = OAuth2BearerToken(session["access_token"])
-        r = s.get("https://api.planningcenteronline.com/people/v2/people")
+        r = s.get("https://api.planningcenteronline.com/people/v2/me")
     r.raise_for_status()
     data = r.json()
     return jsonify(data)
