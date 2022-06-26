@@ -43,11 +43,19 @@ app.users = {}
 
 print(f"PCO_APP_ID: {PCO_APP_ID}")
 
-@app.route('/test')
-def test():
-    global TEST_MSG
-    print(f"remote ip: {request.remote_addr}")
-    return f"{TEST_MSG} {request.remote_addr}"
+@app.route('/')
+def index():
+    if not session.get("access_token") or session.get("access_token") not in app.users:
+        return redirect("/auth/callback")
+    user = app.users[session.get("access_token")]
+    return app.send_static_file('static/index.html')
+
+@app.route('/auth/me')
+def index():
+    if not session.get("access_token") or session.get("access_token") not in app.users:
+        return redirect("/auth/callback")
+    user = app.users[session.get("access_token")]
+    return jsonify(user)
 
 @app.route("/pco/")
 def pco_index():
@@ -92,7 +100,7 @@ def pco_oauth2callback():
     user['self'] = d['data']['links']['self']
     app.users[data.get("access_token")] = user
     print(f"users: {app.users}")
-    return redirect("/pco")
+    return redirect("/")
 
 if __name__ == '__main__':
     app.run()
