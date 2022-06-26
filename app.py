@@ -81,14 +81,15 @@ def pco_oauth2callback():
         s.auth = OAuth2BearerToken(data.get("access_token"))
         r = s.get("https://api.planningcenteronline.com/people/v2/me")
     r.raise_for_status()
-
+    
+    d = r.json()
     user = {}
-    user['id'] = r['data']['id']
-    user['name'] = r['data']['attributes']['name']
-    user['first_name'] = r['data']['attributes']['first_name']
-    user['avatar'] = r['data']['attributes']['avatar']
-    user['passed_background_check'] = r['data']['attributes']['passed_background_check']
-    user['self'] = r['data']['links']['self']
+    user['id'] = d['data']['id']
+    user['name'] = d['data']['attributes']['name']
+    user['first_name'] = d['data']['attributes']['first_name']
+    user['avatar'] = d['data']['attributes']['avatar']
+    user['passed_background_check'] = d['data']['attributes']['passed_background_check']
+    user['self'] = d['data']['links']['self']
     app.users[data.get("access_token")] = user
     print(f"users: {app.users}")
     return redirect("/pco")
