@@ -40,8 +40,8 @@ app = Flask(__name__,
             static_url_path='', 
             static_folder='static',)
 app.secret_key = SELF_SESSION_SECRET
-
 app.users = {}
+socketio = SocketIO(app)
 
 print(f"PCO_APP_ID: {PCO_APP_ID}")
 
@@ -109,4 +109,5 @@ def test_connect():
     socketio.emit('after connect', {'data':'test'})
 
 if __name__ == '__main__':
-    app.run()
+    #app.run()
+    socketio.run(app)
