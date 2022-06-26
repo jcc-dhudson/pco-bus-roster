@@ -50,7 +50,7 @@ def index():
     if not session.get("access_token") or session.get("access_token") not in app.users:
         return redirect("/auth/callback")
     user = app.users[session.get("access_token")]
-    return app.send_static_file('static/index.html')
+    return app.send_static_file('index.html')
 
 @app.route('/auth/me')
 def auth_me():
