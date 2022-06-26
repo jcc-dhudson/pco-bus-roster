@@ -77,8 +77,9 @@ def pco_oauth2callback():
         grant_type="authorization_code",
     )
     session["access_token"] = data.get("access_token")
-    s.auth = OAuth2BearerToken(data.get("access_token"))
-    r = s.get("https://api.planningcenteronline.com/people/v2/me")
+    with requests.Session() as s:
+        s.auth = OAuth2BearerToken(data.get("access_token"))
+        r = s.get("https://api.planningcenteronline.com/people/v2/me")
     r.raise_for_status()
 
     user = {}
