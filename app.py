@@ -14,6 +14,7 @@ LIST_ID = '2287128'
 DEBUG = False
 if 'BUS_ROSTER_DEBUG' in os.environ:
     DEBUG = True
+    print("WARNING! Running in insecure debug mode!")
 
 # from: https://github.com/pastorhudson/PCO-oauth2
 class PlanningCenterClient(OAuth2):
@@ -65,8 +66,9 @@ def auth_me():
 
 @app.route('/list')
 def list():
-    if not session.get("access_token") or session.get("access_token") not in app.users or DEBUG:
-        return redirect("/auth/callback")
+    if not session.get("access_token") or session.get("access_token") not in app.users:
+        if not DEBUG:
+            return redirect("/auth/callback")
     listResp = pco.get(f"/people/v2/lists/{LIST_ID}?include=people")
     if 'included' not in listResp:
         logger(f"No data for list {listId} from PCO.")
@@ -114,16 +116,26 @@ def pco_oauth2callback():
     r.raise_for_status()
     
     d = r.json()
-    user = {}
-    user['id'] = d['data']['id']
-    user['name'] = d['data']['attributes']['name']
-    user['first_name'] = d['data']['attributes']['first_name']
-    user['avatar'] = d['data']['attributes']['avatar']
-    user['passed_background_check'] = d['data']['attributes']['passed_background_check']
-    user['self'] = d['data']['links']['self']
-    app.users[data.get("access_token")] = user
-    print(f"users: {app.users}")
-    return redirect("/")
+
+    authorized = False
+    listResp = pco.get(f"/people/v2/lists/{LIST_ID}?include=people")
+    for person in listResp['included']:
+        if person['id'] == d['data']['id'] and d['data']['attributes']['passed_background_check'] == 'true':
+            authorized = True
+
+    if authorized:
+        user = {}
+        user['id'] = d['data']['id']
+        user['name'] = d['data']['attributes']['name']
+        user['first_name'] = d['data']['attributes']['first_name']
+        user['avatar'] = d['data']['attributes']['avatar']
+        user['passed_background_check'] = d['data']['attributes']['passed_background_check']
+        user['self'] = d['data']['links']['self']
+        app.users[data.get("access_token")] = user
+        print(f"users: {app.users}")
+        return redirect("/")
+    else:
+        return "unauthorized", 403
 
 @socketio.on('connect')
 def test_connect():
