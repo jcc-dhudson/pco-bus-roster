@@ -6,7 +6,7 @@ import requests
 from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template, request, send_from_directory, session, redirect
 from requests_oauth2 import OAuth2BearerToken, OAuth2
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO, emit, send
 
 TEST_MSG = 'hello world.'
 LIST_ID = '2287128'
@@ -47,7 +47,7 @@ app = Flask(__name__,
 app.secret_key = SELF_SESSION_SECRET
 app.users = {}
 app.list = []
-socketio = SocketIO(app)
+socketio = SocketIO(app, async_mode='eventlet')
 
 pco = pypco.PCO(PCO_APP_ID, PCO_SECRET)
 
@@ -102,6 +102,7 @@ def checkin(id):
         if i['id'] == id:
             app.list.remove(i)
             print(f"checked in {id} and removed from app.list")
+    socketio.emit('checkin', {'id': id}, broadcast=True)
     return f"ok. {id}"
 
 @app.route("/pco/")
@@ -159,14 +160,10 @@ def pco_oauth2callback():
     else:
         return "unauthorized", 403
 
-@socketio.on('connect')
-def test_connect():
-    socketio.emit('after connect', {'data':'test'})
 
 
 getList(refresh=True)
 if __name__ == '__main__':
     #app.run()
-    
-    socketio.run(app)
+    socketio.run(app, port=8000)
     
