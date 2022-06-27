@@ -46,6 +46,7 @@ app = Flask(__name__,
             static_folder='static',)
 app.secret_key = SELF_SESSION_SECRET
 app.users = {}
+app.list = []
 socketio = SocketIO(app)
 
 pco = pypco.PCO(PCO_APP_ID, PCO_SECRET)
@@ -64,11 +65,7 @@ def auth_me():
     user = app.users[session.get("access_token")]
     return jsonify(user)
 
-@app.route('/list')
-def list():
-    if not session.get("access_token") or session.get("access_token") not in app.users:
-        if not DEBUG:
-            return redirect("/auth/callback")
+def getList(refresh=False):
     listResp = pco.get(f"/people/v2/lists/{LIST_ID}?include=people")
     if 'included' not in listResp:
         logger(f"No data for list {listId} from PCO.")
@@ -80,13 +77,31 @@ def list():
         outP['name'] = person['attributes']['name']
         outP['avatar'] = person['attributes']['avatar']
         out.append(outP)
-    return jsonify(out)
+    
+    if refresh:
+        app.list = out
+        print("refreshing internal list")
+    return out
+
+@app.route('/list')
+def list(refresh=False):
+    if not session.get("access_token") or session.get("access_token") not in app.users:
+        if not DEBUG:
+            return redirect("/auth/callback")
+    if request.args.get('refresh') is not None and request.args.get('refresh') == 'true':
+        refresh = True
+    return jsonify(getList(refresh))
+
 
 @app.route('/checkin/<string:id>')
 def checkin(id):
     if not session.get("access_token") or session.get("access_token") not in app.users:
         if not DEBUG:
             return redirect("/auth/callback")
+    for i in app.list:
+        if i['id'] == id:
+            app.list.remove(i)
+            print(f"checked in {id} and removed from app.list")
     return f"ok. {id}"
 
 @app.route("/pco/")
@@ -126,7 +141,6 @@ def pco_oauth2callback():
     authorized = False
     listResp = pco.get(f"/people/v2/lists/{LIST_ID}?include=people")
     for person in listResp['included']:
-        print(f"{person['attributes']['name']}: {person['id']} {d['data']['id']} -- background: {person['attributes']['passed_background_check']}")
         if person['id'] == d['data']['id'] and person['attributes']['passed_background_check']:
             print(f"user {d['data']['attributes']['name']} is authorized.")
             authorized = True
@@ -149,6 +163,10 @@ def pco_oauth2callback():
 def test_connect():
     socketio.emit('after connect', {'data':'test'})
 
+
+getList(refresh=True)
 if __name__ == '__main__':
     #app.run()
+    
     socketio.run(app)
+    
