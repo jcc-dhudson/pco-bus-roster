@@ -13,7 +13,7 @@ from azure.messaging.webpubsubservice import WebPubSubServiceClient
 
 TEST_MSG = 'hello world.'
 LIST_ID = '2287128'
-tz = pytz.timezone('America/New_York')
+timezone = pytz.timezone('America/New_York')
 
 DEBUG = False
 if 'BUS_ROSTER_DEBUG' in os.environ:
@@ -98,8 +98,7 @@ def list(refresh=False):
 
 @app.route('/checkin/<string:id>')
 def checkin(id):
-    checkinTime = datetime.now()
-    checkinTime = tz.localize(checkinTime)
+    checkinTime = timezone.localize(datetime.now())
     user = {}
     user['name'] = 'TEST_NOT_AUTH'
     if not session.get("access_token") or session.get("access_token") not in app.users:
