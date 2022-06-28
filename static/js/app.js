@@ -1,6 +1,13 @@
 
 var $table = $('#fresh-table')
 var $alertBtn = $('#alertBtn')
+const options = {
+  timeZone:"US/Eastern",
+  hour12 : false,
+  hour:  "2-digit",
+  minute: "2-digit",
+  second: "2-digit"
+};
 
 window.operateEvents = {
     'click .checkin': function (e, value, row, index) {
@@ -17,6 +24,9 @@ window.operateEvents = {
 
 function actionFormatter(value, row, index) {
   if(value == 'blank'){
+    return ' '
+  }
+  if(row.status != undefined) {
     return ' '
   }
   return [
@@ -51,7 +61,9 @@ $(function () {
   })
 
   $alertBtn.click(function () {
-    alert('You pressed on Alert')
+    $.get("/list?refresh=true", function(data, status){
+        $table.bootstrapTable('load', data)
+    });
   })
 })
 
@@ -73,14 +85,14 @@ $.get("/negotiate", function(data, status){
       //row = getRowByUniqueId(data.data.checkin)
       //$table.bootstrapTable('hideRow', {'uniqueId': data.data.checkin})
       //$table.bootstrapTable('hideColumn', 'name')
-      $('*[data-uniqueid='+ data.data.checkin +']').css('opacity','0.3')
-      //console.log(  )
+      $('*[data-uniqueid='+ data.data.id +']').css('opacity','0.3')
+      console.log( data.data.id + ' ' + data.data.status )
       $table.bootstrapTable('updateByUniqueId', {
-        id: row.id,
+        id: data.data.id,
         row: {
-          actions: 'blank'
+
+          status: data.data.status
         }})
     }
   };
 });
-

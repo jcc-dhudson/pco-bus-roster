@@ -17,7 +17,7 @@ DEBUG = False
 if 'BUS_ROSTER_DEBUG' in os.environ:
     DEBUG = True
     print("WARNING! Running in insecure debug mode!")
-    
+
 
 # from: https://github.com/pastorhudson/PCO-oauth2
 class PlanningCenterClient(OAuth2):
@@ -82,10 +82,7 @@ def getList(refresh=False):
         outP['name'] = person['attributes']['name']
         outP['avatar'] = person['attributes']['avatar']
         out.append(outP)
-    
-    if refresh:
-        app.list = out
-        print("refreshing internal list")
+
     return out
 
 @app.route('/list')
@@ -94,21 +91,32 @@ def list(refresh=False):
         if not DEBUG:
             return redirect("/auth/callback")
     if request.args.get('refresh') is not None and request.args.get('refresh') == 'true':
-        refresh = True
-    return jsonify(getList(refresh))
+        app.list = getList()
+    return jsonify(app.list)
 
 @app.route('/checkin/<string:id>')
 def checkin(id):
+    checkinTime = datetime.now()
+    user = {}
+    user['name'] = 'TEST_NOT_AUTH'
     if not session.get("access_token") or session.get("access_token") not in app.users:
         if not DEBUG:
             return redirect("/auth/callback")
+    else:
+        user = app.users[session.get("access_token")]
+    
+    statusLine = f"{checkinTime.strftime('%I:%M:%S')} by {user['name']}"
+    newList = []
     for i in app.list:
         if i['id'] == id:
-            app.list.remove(i)
+            i['status'] = statusLine
             print(f"checked in {id} and removed from app.list")
+        newList.append(i)
+    app.list = newList
     #socketio.emit('checkin', {'id': id}, broadcast=True)
     ws.send_to_all(content_type="application/json", message={
-        'checkin': id
+        'id': id,
+        'status': statusLine
     })
     return f"ok. {id}"
 
@@ -185,7 +193,7 @@ def pco_oauth2callback():
 
 
 
-getList(refresh=True)
+app.list = getList()
 if __name__ == '__main__':
     app.run()
     #socketio.run(app, port=8000)
