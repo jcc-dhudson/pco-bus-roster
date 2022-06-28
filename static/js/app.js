@@ -31,7 +31,6 @@ function avatarFormatter(value, row, index) {
   ].join('')
 }
 
-
 $(function () {
   $table.bootstrapTable({
     classes: 'table table-hover table-striped',
