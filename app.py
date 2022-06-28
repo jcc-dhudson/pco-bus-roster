@@ -1,7 +1,4 @@
-<<<<<<< HEAD
 from cmd import IDENTCHARS
-=======
->>>>>>> 725cff599c0b56637827ae921fe0e2fb6b9f8931
 import sys
 import os
 import pypco
@@ -10,12 +7,8 @@ import requests
 from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template, request, send_from_directory, session, redirect
 from requests_oauth2 import OAuth2BearerToken, OAuth2
-<<<<<<< HEAD
 #from flask_socketio import SocketIO, emit, send
 from azure.messaging.webpubsubservice import WebPubSubServiceClient
-=======
-from flask_socketio import SocketIO, emit, send
->>>>>>> 725cff599c0b56637827ae921fe0e2fb6b9f8931
 
 TEST_MSG = 'hello world.'
 LIST_ID = '2287128'
