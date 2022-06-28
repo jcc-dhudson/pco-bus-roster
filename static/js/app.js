@@ -85,4 +85,3 @@ $.get("/negotiate", function(data, status){
   };
 });
 
-

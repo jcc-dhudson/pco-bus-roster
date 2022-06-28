@@ -112,6 +112,7 @@ def checkin(id):
     })
     return f"ok. {id}"
 
+
 @app.route("/pco/")
 def pco_index():
     user = {}
