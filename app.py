@@ -96,7 +96,6 @@ def list(refresh=False):
         refresh = True
     return jsonify(getList(refresh))
 
-
 @app.route('/checkin/<string:id>')
 def checkin(id):
     if not session.get("access_token") or session.get("access_token") not in app.users:
@@ -111,7 +110,6 @@ def checkin(id):
         'checkin': id
     })
     return f"ok. {id}"
-
 
 @app.route("/pco/")
 def pco_index():
