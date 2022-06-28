@@ -4,6 +4,7 @@ import os
 import pypco
 import shelve
 import requests
+import pytz
 from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template, request, send_from_directory, session, redirect
 from requests_oauth2 import OAuth2BearerToken, OAuth2
@@ -12,6 +13,7 @@ from azure.messaging.webpubsubservice import WebPubSubServiceClient
 
 TEST_MSG = 'hello world.'
 LIST_ID = '2287128'
+tz = pytz.timezone('America/New_York')
 
 DEBUG = False
 if 'BUS_ROSTER_DEBUG' in os.environ:
@@ -97,6 +99,7 @@ def list(refresh=False):
 @app.route('/checkin/<string:id>')
 def checkin(id):
     checkinTime = datetime.now()
+    checkinTime = tz.localize(checkinTime)
     user = {}
     user['name'] = 'TEST_NOT_AUTH'
     if not session.get("access_token") or session.get("access_token") not in app.users:
