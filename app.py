@@ -4,16 +4,19 @@ import os
 import pypco
 import shelve
 import requests
-import pytz
+from pytz import timezone
 from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template, request, send_from_directory, session, redirect
 from requests_oauth2 import OAuth2BearerToken, OAuth2
 #from flask_socketio import SocketIO, emit, send
 from azure.messaging.webpubsubservice import WebPubSubServiceClient
+from azure.cosmos import CosmosClient
 
 TEST_MSG = 'hello world.'
 LIST_ID = '2287128'
-timezone = pytz.timezone('America/New_York')
+etc = timezone('America/New_York')
+DATABASE_NAME = 'bus-roster'
+CONTAINER_NAME = 'events'
 
 DEBUG = False
 if 'BUS_ROSTER_DEBUG' in os.environ:
@@ -36,8 +39,10 @@ try:
     SELF_BASE_URL = os.environ['SELF_BASE_URL']
     SELF_SESSION_SECRET = os.environ['SELF_SESSION_SECRET']
     PUBSUB_CONNECTION_STRING = os.environ['PUBSUB_CONNECTION_STRING']
+    COSMOS_URL = os.environ['COSMOS_URL']
+    COSMOS_KEY = os.environ['COSMOS_KEY']
 except Exception as e:
-    print(f"Must supply PCO_APP_ID, PCO_SECRET, PCO_OAUTH_CLIEND_ID, PCO_OAUTH_SECRET, PUBSUB_CONNECTION_STRING as environment vairables. - {e}")
+    print(f"Must supply PCO_APP_ID, PCO_SECRET, PCO_OAUTH_CLIEND_ID, COSMOS_KEY, COSMOS_URL, PCO_OAUTH_SECRET, PUBSUB_CONNECTION_STRING as environment vairables. - {e}")
     sys.exit(1)
 
 
@@ -54,6 +59,10 @@ app.secret_key = SELF_SESSION_SECRET
 app.users = {}
 app.list = []
 #socketio = SocketIO(app, async_mode='gevent')
+
+cosmos = CosmosClient(COSMOS_URL, credential=COSMOS_KEY)
+database = cosmos.get_database_client(DATABASE_NAME)
+container = database.get_container_client(CONTAINER_NAME)
 
 pco = pypco.PCO(PCO_APP_ID, PCO_SECRET)
 ws = WebPubSubServiceClient.from_connection_string(connection_string=PUBSUB_CONNECTION_STRING, hub='hub')
@@ -96,9 +105,10 @@ def list(refresh=False):
         app.list = getList()
     return jsonify(app.list)
 
-@app.route('/checkin/<string:id>')
-def checkin(id):
-    checkinTime = timezone.localize(datetime.now())
+@app.route('/checkin/<string:id>', methods = ['POST'])
+def checkin():
+    now_utc = datetime.now(timezone('UTC'))
+    checkinTime = now_utc.astimezone(etc)
     user = {}
     user['name'] = 'TEST_NOT_AUTH'
     if not session.get("access_token") or session.get("access_token") not in app.users:
@@ -106,21 +116,40 @@ def checkin(id):
             return redirect("/auth/callback")
     else:
         user = app.users[session.get("access_token")]
+
+    data = json(request.form)
     
     statusLine = f"{checkinTime.strftime('%I:%M:%S')} by {user['name']}"
+    ws.send_to_all(content_type="application/json", message={ 'id': data['id'], 'status': statusLine })
+
     newList = []
     for i in app.list:
-        if i['id'] == id:
+        if i['id'] == data['id']:
             i['status'] = statusLine
             print(f"checked in {id} and removed from app.list")
         newList.append(i)
     app.list = newList
-    #socketio.emit('checkin', {'id': id}, broadcast=True)
-    ws.send_to_all(content_type="application/json", message={
-        'id': id,
-        'status': statusLine
+    
+    container.upsert_item({
+        'person_id': data['id'],
+        'person_name': data['name'],
+        'by_name': user['name'],
+        'by_id': user['id'],
+        'by_uri': user['self'],
+        'datetime': now_utc
     })
     return f"ok. {id}"
+
+@app.route('/events', methods = ['GET'])
+def events_list():
+    if not session.get("access_token") or session.get("access_token") not in app.users:
+        if not DEBUG:
+            return redirect("/auth/callback")
+
+    return container.query_items(
+        query=f'SELECT * FROM {CONTAINER_NAME} r',
+        enable_cross_partition_query=True)
+
 
 @app.route("/pco/")
 def pco_index():

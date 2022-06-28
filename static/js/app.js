@@ -16,6 +16,12 @@ window.operateEvents = {
         row: {
           actions: 'blank'
         }})
+        postObj == {'id': row.id, 'name': row.name}
+        $.ajax('/checkin', {
+          data : JSON.stringify(myJSObject),
+          contentType : 'application/json',
+          type : 'POST',
+        })
         $.get("/checkin/" + row.id, function(data, status){
 
         });
