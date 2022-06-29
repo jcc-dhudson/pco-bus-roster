@@ -17,7 +17,7 @@ navigator.geolocation.getCurrentPosition((gpsLoc) => {
   userLocation.heading = gpsLoc.coords.heading
   userLocation.speed = gpsLoc.coords.speed
   console.log(userLocation)
-}, {enableHighAccuracy: true});
+}, null, {enableHighAccuracy: true});
 
 window.operateEvents = {
     'click .checkin': function (e, value, row, index) {
