@@ -18,6 +18,31 @@
     <link href="css/style.css" rel="stylesheet" />
 </head>
 <body id="page-top">
+    <div class="modal fade" id="omnimodal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">
+                        &times;
+                    </button> 
+                    <h4 class="modal-title">
+                        Check-In
+                    </h4>                                                             
+                </div> 
+                <div class="modal-body">
+                    
+                </div>   
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        Close
+                    </button>
+                    <button type="button" class="btn btn-primary">
+                        Ok
+                    </button>                                 
+                </div>
+            </div>                                                                       
+        </div>                                      
+    </div>
     <div class="fresh-table full-screen-table toolbar-color-orange">
         <!--    Available colors for the full background: full-color-blue, full-color-azure, full-color-green, full-color-red, full-color-orange
                 Available colors only for the toolbar: toolbar-color-blue, toolbar-color-azure, toolbar-color-green, toolbar-color-red, toolbar-color-orange
@@ -30,7 +55,7 @@
                     <th data-field="actions" data-formatter="actionFormatter" data-events="operateEvents">Actions</th>
                     <th data-field="avatar" data-formatter="avatarFormatter" data-sortable="false">Avatar</th>
                     <th data-field="name" data-sortable="true">Name</th>
-                    <th data-field="status" data-sortable="true">Status</th>
+                    <th data-field="status" data-formatter="statusFormatter" data-events="operateStatus" data-sortable="true">Status</th>
                 </thead>
                 <tbody>
                     

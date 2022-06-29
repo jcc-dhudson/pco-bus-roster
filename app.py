@@ -117,9 +117,20 @@ def checkin():
         user = app.users[session.get("access_token")]
 
     data = request.json
-    
     statusLine = f"{checkinTime.strftime('%I:%M:%S')} by {user['name']}"
-    ws.send_to_all(content_type="application/json", message={ 'id': data['id'], 'status': statusLine })
+    checkinObj = {
+        'id': data['id'] + "_" + str(now_utc.timestamp()),
+        'person_id': data['id'],
+        'person_name': data['name'],
+        'by_name': user['name'],
+        'by_id': user['id'],
+        'by_uri': user['self'],
+        'location': data['location'],
+        'status': statusLine,
+        'datetime': now_utc.timestamp()
+    }
+
+    ws.send_to_all(content_type="application/json", message=checkinObj)
 
     newList = []
     for i in app.list:
@@ -129,16 +140,7 @@ def checkin():
         newList.append(i)
     app.list = newList
     
-    container.upsert_item({
-        'id': data['id'] + "_" + str(now_utc.timestamp()),
-        'person_id': data['id'],
-        'person_name': data['name'],
-        'by_name': user['name'],
-        'by_id': user['id'],
-        'by_uri': user['self'],
-        'location': data['location'],
-        'datetime': now_utc.timestamp()
-    })
+    container.upsert_item(checkinObj)
     return f"ok. {data['id']}"
 
 @app.route('/events', methods = ['GET'])

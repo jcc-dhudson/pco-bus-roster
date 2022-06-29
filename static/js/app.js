@@ -35,6 +35,11 @@ window.operateEvents = {
         })
     }
   }
+  window.operateStatus = {
+    'click .status': function (e, value, row, index) {
+      $table.bootstrapTable('toggleDetailView', index)
+    }
+  }
 
 function actionFormatter(value, row, index) {
   if(value == 'blank'){
@@ -44,11 +49,20 @@ function actionFormatter(value, row, index) {
     return ' '
   }
   return [
-    '<a rel="tooltip" title="Like" class="table-action checkin" href="javascript:void(0)" title="Like">',
+    '<a rel="tooltip" title="Checkin" class="table-action checkin" href="javascript:void(0)" title="Like">',
       '<i style="font-size: 60px" class="fa-solid fa-circle-check"></i>',
     '</a>'
   ].join('')
 }
+function statusFormatter(value, row, index) {
+  if(value != undefined){
+    return '<a class="table-action status" href="javascript:void(0)">'+ value + '</a>'
+  }
+}
+function detailFormatter(value, row, index) {
+  return JSON.stringify(row.location)
+}
+
 function avatarFormatter(value, row, index) {
   return [
     '<img src="' + row.avatar + '" width="72px"/>'
@@ -65,13 +79,8 @@ $(function () {
     striped: true,
     sortable: true,
     uniqueId: "id",
-
-    formatShowingRows: function (pageFrom, pageTo, totalRows) {
-      return ''
-    },
-    formatRecordsPerPage: function (pageNumber) {
-      return pageNumber + ' rows visible'
-    }
+    detailFormatter: "detailFormatter",
+    detailView: "true",
   })
 
   $alertBtn.click(function () {
@@ -99,13 +108,13 @@ $.get("/negotiate", function(data, status){
       //row = getRowByUniqueId(data.data.checkin)
       //$table.bootstrapTable('hideRow', {'uniqueId': data.data.checkin})
       //$table.bootstrapTable('hideColumn', 'name')
-      $('*[data-uniqueid='+ data.data.id +']').css('opacity','0.3')
-      console.log( data.data.id + ' ' + data.data.status )
+      console.log( data.data.person_id + ' ' + data.data.status )
       $table.bootstrapTable('updateByUniqueId', {
-        id: data.data.id,
+        id: data.data.person_id,
         row: {
-
-          status: data.data.status
+          status: data.data.status,
+          location: data.data.location,
+          detail: JSON.stringify(data.data.location)
         }})
     }
   };
