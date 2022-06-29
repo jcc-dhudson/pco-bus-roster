@@ -2,7 +2,7 @@ from cmd import IDENTCHARS
 import sys
 import os
 import pypco
-import shelve
+import json
 import requests
 from pytz import timezone
 from datetime import datetime, timedelta
@@ -17,6 +17,7 @@ LIST_ID = '2287128'
 etc = timezone('America/New_York')
 DATABASE_NAME = 'bus-roster'
 CONTAINER_NAME = 'events'
+DEMOUSER = {'name': 'TEST_NOT_AUTH', 'id': '1234', 'self': 'http://127.0.0.1:8000/self'}
 
 DEBUG = False
 if 'BUS_ROSTER_DEBUG' in os.environ:
@@ -105,19 +106,19 @@ def list(refresh=False):
         app.list = getList()
     return jsonify(app.list)
 
-@app.route('/checkin/<string:id>', methods = ['POST'])
+@app.route('/checkin', methods = ['POST'])
 def checkin():
     now_utc = datetime.now(timezone('UTC'))
     checkinTime = now_utc.astimezone(etc)
-    user = {}
-    user['name'] = 'TEST_NOT_AUTH'
+
     if not session.get("access_token") or session.get("access_token") not in app.users:
+        user = DEMOUSER
         if not DEBUG:
             return redirect("/auth/callback")
     else:
         user = app.users[session.get("access_token")]
 
-    data = json(request.form)
+    data = request.json
     
     statusLine = f"{checkinTime.strftime('%I:%M:%S')} by {user['name']}"
     ws.send_to_all(content_type="application/json", message={ 'id': data['id'], 'status': statusLine })
@@ -126,17 +127,19 @@ def checkin():
     for i in app.list:
         if i['id'] == data['id']:
             i['status'] = statusLine
-            print(f"checked in {id} and removed from app.list")
+            print(f"checked in {data['id']}")
         newList.append(i)
     app.list = newList
     
     container.upsert_item({
+        'id': data['id'] + "_" + str(now_utc.timestamp()),
         'person_id': data['id'],
         'person_name': data['name'],
         'by_name': user['name'],
         'by_id': user['id'],
         'by_uri': user['self'],
-        'datetime': now_utc
+        'location': data['location'],
+        'datetime': now_utc.timestamp()
     })
     return f"ok. {id}"
 

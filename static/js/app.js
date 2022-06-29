@@ -1,6 +1,7 @@
 
 var $table = $('#fresh-table')
 var $alertBtn = $('#alertBtn')
+var userLocation = {}
 const options = {
   timeZone:"US/Eastern",
   hour12 : false,
@@ -9,6 +10,15 @@ const options = {
   second: "2-digit"
 };
 
+navigator.geolocation.getCurrentPosition((gpsLoc) => {
+  userLocation.latitude = gpsLoc.coords.latitude
+  userLocation.longitude = gpsLoc.coords.longitude
+  userLocation.accuracy = gpsLoc.coords.accuracy
+  userLocation.heading = gpsLoc.coords.heading
+  userLocation.speed = gpsLoc.coords.speed
+  console.log(userLocation)
+});
+
 window.operateEvents = {
     'click .checkin': function (e, value, row, index) {
       $table.bootstrapTable('updateByUniqueId', {
@@ -16,15 +26,13 @@ window.operateEvents = {
         row: {
           actions: 'blank'
         }})
-        postObj == {'id': row.id, 'name': row.name}
+        console.log(userLocation)
+        postObj = {'id': row.id, 'name': row.name, 'location': userLocation}
         $.ajax('/checkin', {
-          data : JSON.stringify(myJSObject),
+          data : JSON.stringify(postObj),
           contentType : 'application/json',
           type : 'POST',
         })
-        $.get("/checkin/" + row.id, function(data, status){
-
-        });
     }
   }
 
