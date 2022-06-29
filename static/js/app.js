@@ -11,61 +11,124 @@ const options = {
 };
 const mapView = new ol.View({
   center: [0, 0],
-  zoom: 16,
+  zoom: 14,
 });
 var map = new ol.Map({
   target: 'map',
-  layers: [ new ol.layer.Tile({ source: new ol.source.OSM() }) ],
+  layers: [ new ol.layer.Tile({ 
+    source: new ol.source.OSM(),
+    attributions: [ '' ],
+  }) ],
   view: mapView
 })
+if( 'NDEFReader' in window){
+  const ndef = new NDEFReader();
+  ndef.scan().then(() => {
+    console.log("Scan started successfully.");
+    ndef.onreadingerror = () => {
+      console.log("Cannot read data from the NFC tag. Try another one?");
+    };
+    ndef.onreading = event => {
+      const message = event.message;
+      for (const record of message.records) {
+        console.log(record)
+        // postCheckin(record.message)
+      }
+    };
+  }).catch(error => {
+    console.log(`Error! Scan failed to start: ${error}.`);
+  });
+} else {
+  console.log('no NDEFReader available, not scanning NFC')
+}
 
-console.log(map)
 
 
-navigator.geolocation.getCurrentPosition((gpsLoc) => {
-  userLocation.latitude = gpsLoc.coords.latitude
-  userLocation.longitude = gpsLoc.coords.longitude
-  userLocation.accuracy = gpsLoc.coords.accuracy
-  userLocation.heading = gpsLoc.coords.heading
-  userLocation.speed = gpsLoc.coords.speed
-}, null, {enableHighAccuracy: true});
-
+//
+// when the check-in button is clicked
+//
+function postCheckin(pID) {
+  navigator.geolocation.getCurrentPosition((gpsLoc) => {
+    userLocation = {
+      'latitude': gpsLoc.coords.latitude,
+      'longitude': gpsLoc.coords.longitude,
+      'accuracy': gpsLoc.coords.accuracy,
+      'heading': gpsLoc.coords.heading,
+      'speed': gpsLoc.coords.speed
+    }
+    row = $table.bootstrapTable('getRowByUniqueId', pID)
+    if(row.id != undefined) {
+      postObj = {'id': row.id, 'name': row.name, 'location': userLocation}
+      $.ajax('/checkin', {
+        data : JSON.stringify(postObj),
+        contentType : 'application/json',
+        type : 'POST',
+      })
+    } else {
+      console.log("could not find row by ", pID)
+    }
+  }, (error) => {
+    userLocation = {
+      'latitude': 0,
+      'longitude': 0,
+      'accuracy': 9999,
+      'heading': 0,
+      'speed': 0
+    }
+    row = $table.bootstrapTable('getRowByUniqueId', pID)
+    if(row.id != undefined) {
+      postObj = {'id': row.id, 'name': row.name, 'location': userLocation}
+      $.ajax('/checkin', {
+        data : JSON.stringify(postObj),
+        contentType : 'application/json',
+        type : 'POST',
+      })
+    } else {
+      console.log("could not find row by ", pID)
+    }
+  }, {enableHighAccuracy: true});
+}
 window.operateEvents = {
-    'click .checkin': function (e, value, row, index) {
-      $table.bootstrapTable('updateByUniqueId', {
-        id: row.id,
-        row: {
-          actions: 'blank'
-        }})
-        navigator.geolocation.getCurrentPosition((gpsLoc) => {
-          userLocation.latitude = gpsLoc.coords.latitude
-          userLocation.longitude = gpsLoc.coords.longitude
-          userLocation.accuracy = gpsLoc.coords.accuracy
-          userLocation.heading = gpsLoc.coords.heading
-          userLocation.speed = gpsLoc.coords.speed
-          postObj = {'id': row.id, 'name': row.name, 'location': userLocation}
-          $.ajax('/checkin', {
-            data : JSON.stringify(postObj),
-            contentType : 'application/json',
-            type : 'POST',
-          })
-        }, null, {enableHighAccuracy: true});
-        
-        
-    }
+  'click .checkin': function (e, value, row, index) {
+    $table.bootstrapTable('updateByUniqueId', {
+      id: row.id,
+      row: {
+        actions: 'blank'
+      }})
+      postCheckin(row.id)
+      console.log(row.id)
   }
-  window.operateStatus = {
-    'click .status': function (e, value, row, index) {
-      //$('#omnimodal-body').html('')
-      $('#omnimodal-title').html(row.name + ' @ ' + row.status)
-      mapView.centerOn(ol.proj.fromLonLat([row.location.longitude, row.location.latitude]), map.getSize(), [570, 500])
-      $('#omnimodal').modal('show')
-    }
+}
+  //
+  // when a check-in status message is clicked:
+  //
+window.operateStatus = {
+  'click .status': function (e, value, row, index) {
+    //$('#omnimodal-body').html('')
+    $('#omnimodal-title').html(row.name + ' @ ' + row.status)
+    mapView.centerOn(ol.proj.fromLonLat([row.location.longitude, row.location.latitude]), map.getSize(), [640, 640])
+    map.addLayer(
+      pointLayer = new ol.layer.Vector({
+        source: new ol.source.Vector({
+            features: [
+                new ol.Feature({
+                    geometry: new ol.geom.Point(ol.proj.fromLonLat([row.location.longitude, row.location.latitude]))
+                })
+            ]
+        })
+      })
+    );
+    $('#omnimodal').modal('show')
   }
-  $('#omnimodal').on('shown.bs.modal', event => {
-    map.updateSize();
-  })
+}
 
+$('#omnimodal').on('shown.bs.modal', event => {
+  map.updateSize();
+})
+
+//
+// table formatters
+//
 function actionFormatter(value, row, index) {
   if(value == 'blank'){
     return ' '
@@ -81,18 +144,13 @@ function actionFormatter(value, row, index) {
 }
 function statusFormatter(value, row, index) {
   if(value != undefined){
-    return '<a class="table-action status" href="javascript:void(0)">'+ value + '</a>'
+    if( 'location' in row && row.location.latitude != 0 ) {
+      return '<a class="table-action status" href="javascript:void(0)">'+ value + '</a>'
+    } else {
+      return value
+    }
   }
 }
-function detailFormatter(value, row, index) {
-  if(row.location != undefined) {
-    return ''
-  } else {
-    return ''
-  }
-  
-}
-
 function avatarFormatter(value, row, index) {
   return [
     '<img src="' + row.avatar + '" width="72px"/>'
@@ -108,44 +166,38 @@ $(function () {
     pagination: false,
     striped: true,
     sortable: true,
-    uniqueId: "id",
-    detailFormatter: "detailFormatter",
-    detailView: "true",
-  })
-
-  $alertBtn.click(function () {
-    $.get("/list?refresh=true", function(data, status){
-        $table.bootstrapTable('load', data)
-    });
+    uniqueId: "id"
   })
 })
+
+$alertBtn.click(function () {
+  $.get("/list?refresh=true", function(data, status){
+      $table.bootstrapTable('load', data)
+  });
+})
+
 
 var ws
 $.get("/negotiate", function(data, status){
   ws = new WebSocket(data.url, protocols='json.webpubsub.azure.v1');
   ws.onmessage = event => {
     data = JSON.parse(event.data);
-    if (data.type === "ack") {
-      var sentMessage = sentMessages[data.ackId];
-      if (sentMessage) {
-        if (data.success == true) {
-          sentMessage.innerText += ' Success'
-        } else {
-          sentMessage.innerText += ` Failed: ${data.error.message}`
-        }
+    console.log(data.data)
+    if (data.type == "message") {
+      if( 'person_id' in data.data ) {
+        console.log( data.data.person_id + ' ' + data.data.status )
+        $table.bootstrapTable('updateByUniqueId', {
+          id: data.data.person_id,
+          row: {
+            status: data.data.status,
+            location: data.data.location,
+            detail: JSON.stringify(data.data.location)
+          }})
+      } else if ( 'refresh' in  data.data && data.data.refresh == true){
+        $.get("/list", function(data, status){
+          $table.bootstrapTable('load', data)
+        });
       }
-    } else if (data.type == "message") {
-      //row = getRowByUniqueId(data.data.checkin)
-      //$table.bootstrapTable('hideRow', {'uniqueId': data.data.checkin})
-      //$table.bootstrapTable('hideColumn', 'name')
-      console.log( data.data.person_id + ' ' + data.data.status )
-      $table.bootstrapTable('updateByUniqueId', {
-        id: data.data.person_id,
-        row: {
-          status: data.data.status,
-          location: data.data.location,
-          detail: JSON.stringify(data.data.location)
-        }})
     }
   };
 });

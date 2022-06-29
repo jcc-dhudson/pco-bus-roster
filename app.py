@@ -3,6 +3,8 @@ import sys
 import os
 import pypco
 import requests
+import uuid
+
 from pytz import timezone
 from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template, request, send_from_directory, session, redirect
@@ -16,6 +18,8 @@ etc = timezone('America/New_York')
 DATABASE_NAME = 'bus-roster'
 CONTAINER_NAME = 'events'
 DEMOUSER = {'name': 'TEST_NOT_AUTH', 'id': '1234', 'self': 'http://127.0.0.1:8000/self'}
+curSession = uuid.uuid4()
+print(f"Current check-in session id: {curSession}")
 
 DEBUG = False
 if 'BUS_ROSTER_DEBUG' in os.environ:
@@ -83,7 +87,7 @@ def auth_me():
 def getList(refresh=False):
     listResp = pco.get(f"/people/v2/lists/{LIST_ID}?include=people")
     if 'included' not in listResp:
-        print(f"No data for list {listId} from PCO.")
+        print(f"No data for list {LIST_ID} from PCO.")
 
     out = []
     for person in listResp['included']:
@@ -102,6 +106,8 @@ def list(refresh=False):
             return redirect("/auth/callback")
     if request.args.get('refresh') is not None and request.args.get('refresh') == 'true':
         app.list = getList()
+        ws.send_to_all(content_type="application/json", message={'refresh': True})
+        curSession = uuid.uuid4()
     return jsonify(app.list)
 
 @app.route('/checkin', methods = ['POST'])
@@ -117,7 +123,7 @@ def checkin():
         user = app.users[session.get("access_token")]
 
     data = request.json
-    statusLine = f"{checkinTime.strftime('%I:%M:%S')} by {user['name']}"
+    statusLine = f"{checkinTime.strftime('%H:%M:%S')} by {user['name']}"
     checkinObj = {
         'id': data['id'] + "_" + str(now_utc.timestamp()),
         'person_id': data['id'],
@@ -127,7 +133,8 @@ def checkin():
         'by_uri': user['self'],
         'location': data['location'],
         'status': statusLine,
-        'datetime': now_utc.timestamp()
+        'datetime': now_utc.timestamp(),
+        'session': str(curSession)
     }
 
     ws.send_to_all(content_type="application/json", message=checkinObj)
@@ -136,6 +143,7 @@ def checkin():
     for i in app.list:
         if i['id'] == data['id']:
             i['status'] = statusLine
+            i['location'] =  data['location']
             print(f"checked in {data['id']}")
         newList.append(i)
     app.list = newList
@@ -148,10 +156,19 @@ def events_list():
     if not session.get("access_token") or session.get("access_token") not in app.users:
         if not DEBUG:
             return redirect("/auth/callback")
-
-    return container.query_items(
-        query=f'SELECT * FROM {CONTAINER_NAME} r',
-        enable_cross_partition_query=True)
+    events = []
+    if request.args.get('session') is not None:
+        qObj = {
+            'query': f'SELECT * FROM {CONTAINER_NAME} e where e.session = @session',
+            'parameters': [
+                { 'name': '@session', 'value': request.args.get('session') }
+            ]
+        }
+    else:
+        qObj = { 'query': f'SELECT * FROM {CONTAINER_NAME} e' }
+    for event in container.query_items(qObj, enable_cross_partition_query=True):
+        events.append(event)
+    return jsonify(events)
 
 
 @app.route("/pco/")
@@ -227,7 +244,7 @@ def pco_oauth2callback():
 
 
 
-app.list = getList()
+app.list = getList(refresh=True)
 if __name__ == '__main__':
     app.run()
     #socketio.run(app, port=8000)
