@@ -2,7 +2,6 @@ from cmd import IDENTCHARS
 import sys
 import os
 import pypco
-import json
 import requests
 from pytz import timezone
 from datetime import datetime, timedelta
@@ -12,7 +11,6 @@ from requests_oauth2 import OAuth2BearerToken, OAuth2
 from azure.messaging.webpubsubservice import WebPubSubServiceClient
 from azure.cosmos import CosmosClient
 
-TEST_MSG = 'hello world.'
 LIST_ID = '2287128'
 etc = timezone('America/New_York')
 DATABASE_NAME = 'bus-roster'
@@ -141,7 +139,7 @@ def checkin():
         'location': data['location'],
         'datetime': now_utc.timestamp()
     })
-    return f"ok. {id}"
+    return f"ok. {data['id']}"
 
 @app.route('/events', methods = ['GET'])
 def events_list():

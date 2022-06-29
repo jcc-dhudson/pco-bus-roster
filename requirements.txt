@@ -6,4 +6,3 @@ flask_socketio
 azure-messaging-webpubsubservice
 pytz
 azure.cosmos
-json
