@@ -9,6 +9,18 @@ const options = {
   minute: "2-digit",
   second: "2-digit"
 };
+const mapView = new ol.View({
+  center: [0, 0],
+  zoom: 16,
+});
+var map = new ol.Map({
+  target: 'map',
+  layers: [ new ol.layer.Tile({ source: new ol.source.OSM() }) ],
+  view: mapView
+})
+
+console.log(map)
+
 
 navigator.geolocation.getCurrentPosition((gpsLoc) => {
   userLocation.latitude = gpsLoc.coords.latitude
@@ -16,7 +28,6 @@ navigator.geolocation.getCurrentPosition((gpsLoc) => {
   userLocation.accuracy = gpsLoc.coords.accuracy
   userLocation.heading = gpsLoc.coords.heading
   userLocation.speed = gpsLoc.coords.speed
-  console.log(userLocation)
 }, null, {enableHighAccuracy: true});
 
 window.operateEvents = {
@@ -26,20 +37,34 @@ window.operateEvents = {
         row: {
           actions: 'blank'
         }})
-        console.log(userLocation)
-        postObj = {'id': row.id, 'name': row.name, 'location': userLocation}
-        $.ajax('/checkin', {
-          data : JSON.stringify(postObj),
-          contentType : 'application/json',
-          type : 'POST',
-        })
+        navigator.geolocation.getCurrentPosition((gpsLoc) => {
+          userLocation.latitude = gpsLoc.coords.latitude
+          userLocation.longitude = gpsLoc.coords.longitude
+          userLocation.accuracy = gpsLoc.coords.accuracy
+          userLocation.heading = gpsLoc.coords.heading
+          userLocation.speed = gpsLoc.coords.speed
+          postObj = {'id': row.id, 'name': row.name, 'location': userLocation}
+          $.ajax('/checkin', {
+            data : JSON.stringify(postObj),
+            contentType : 'application/json',
+            type : 'POST',
+          })
+        }, null, {enableHighAccuracy: true});
+        
+        
     }
   }
   window.operateStatus = {
     'click .status': function (e, value, row, index) {
-      $table.bootstrapTable('toggleDetailView', index)
+      //$('#omnimodal-body').html('')
+      $('#omnimodal-title').html(row.name + ' @ ' + row.status)
+      mapView.centerOn(ol.proj.fromLonLat([row.location.longitude, row.location.latitude]), map.getSize(), [570, 500])
+      $('#omnimodal').modal('show')
     }
   }
+  $('#omnimodal').on('shown.bs.modal', event => {
+    map.updateSize();
+  })
 
 function actionFormatter(value, row, index) {
   if(value == 'blank'){
@@ -60,7 +85,12 @@ function statusFormatter(value, row, index) {
   }
 }
 function detailFormatter(value, row, index) {
-  return JSON.stringify(row.location)
+  if(row.location != undefined) {
+    return ''
+  } else {
+    return ''
+  }
+  
 }
 
 function avatarFormatter(value, row, index) {
