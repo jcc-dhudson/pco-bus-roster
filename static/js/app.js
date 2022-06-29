@@ -43,7 +43,6 @@ if( 'NDEFReader' in window){
 }
 
 
-
 //
 // when the check-in button is clicked
 //

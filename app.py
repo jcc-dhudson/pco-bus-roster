@@ -170,7 +170,6 @@ def events_list():
         events.append(event)
     return jsonify(events)
 
-
 @app.route("/pco/")
 def pco_index():
     user = {}
