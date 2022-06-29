@@ -3,8 +3,6 @@ import sys
 import os
 import pypco
 import requests
-import uuid
-
 from pytz import timezone
 from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template, request, send_from_directory, session, redirect
@@ -18,7 +16,7 @@ etc = timezone('America/New_York')
 DATABASE_NAME = 'bus-roster'
 CONTAINER_NAME = 'events'
 DEMOUSER = {'name': 'TEST_NOT_AUTH', 'id': '1234', 'self': 'http://127.0.0.1:8000/self'}
-curSession = uuid.uuid4()
+curSession = datetime.now(timezone('UTC')).timestamp()
 print(f"Current check-in session id: {curSession}")
 
 DEBUG = False
@@ -107,7 +105,7 @@ def list(refresh=False):
     if request.args.get('refresh') is not None and request.args.get('refresh') == 'true':
         app.list = getList()
         ws.send_to_all(content_type="application/json", message={'refresh': True})
-        curSession = uuid.uuid4()
+        curSession = datetime.now(timezone('UTC')).timestamp()
     return jsonify(app.list)
 
 @app.route('/checkin', methods = ['POST'])

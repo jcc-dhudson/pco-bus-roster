@@ -11,7 +11,7 @@ const options = {
 };
 const mapView = new ol.View({
   center: [0, 0],
-  zoom: 14,
+  zoom: 13,
 });
 var map = new ol.Map({
   target: 'map',
@@ -105,7 +105,7 @@ window.operateStatus = {
   'click .status': function (e, value, row, index) {
     //$('#omnimodal-body').html('')
     $('#omnimodal-title').html(row.name + ' @ ' + row.status)
-    mapView.centerOn(ol.proj.fromLonLat([row.location.longitude, row.location.latitude]), map.getSize(), [640, 640])
+    mapView.centerOn(ol.proj.fromLonLat([row.location.longitude, row.location.latitude]), map.getSize(), [0, 0])
     map.addLayer(
       pointLayer = new ol.layer.Vector({
         source: new ol.source.Vector({
