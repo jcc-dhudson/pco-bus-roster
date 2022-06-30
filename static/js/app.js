@@ -198,9 +198,11 @@ function startScanning(){
       console.log("Cannot read data from the NFC tag. Try another one?");
     };
     ndef.onreading = event => {
-      const textDecoder = new TextDecoder(event.encoding);
-      console.log(`Text: ${textDecoder.decode(event.data)} (${event.lang})`);
-      postCheckin(textDecoder.decode(event.data))
+      for (const record of message.records) {
+        const textDecoder = new TextDecoder(record.encoding);
+        console.log(`Text: ${textDecoder.decode(record.data)} (${record.lang})`);
+        postCheckin(textDecoder.decode(record.data))
+      }
     };
   }).catch(error => {
     console.log(`Error! Scan failed to start: ${error}.`);
