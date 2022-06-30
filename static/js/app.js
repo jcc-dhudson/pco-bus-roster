@@ -44,8 +44,9 @@ function postCheckin(pID, scroll=false) {
       })
       if(scroll){
         rowElem = $('*[data-uniqueid='+ row.id +']')
+        
+        $table.bootstrapTable('scrollTo', {unit: 'rows', value: rowElem.data('index')})
         rowElem.css('background-color','lightgreen')
-        $table.bootstrapTable('scrollTo', {unit: 'rows', value: rowElem.data('index'})
       }
     } else {
       console.log("could not find row by ", pID)
