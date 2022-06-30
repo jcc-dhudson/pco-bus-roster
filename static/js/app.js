@@ -200,6 +200,7 @@ function startScanning(){
     ndef.onreading = event => {
       const textDecoder = new TextDecoder(event.encoding);
       console.log(`Text: ${textDecoder.decode(event.data)} (${event.lang})`);
+      postCheckin(textDecoder.decode(event.data))
     };
   }).catch(error => {
     console.log(`Error! Scan failed to start: ${error}.`);
