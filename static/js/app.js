@@ -42,11 +42,16 @@ function postCheckin(pID, scroll=false) {
         contentType : 'application/json',
         type : 'POST',
       })
+
       if(scroll){
         rowElem = $('*[data-uniqueid='+ row.id +']')
-        
         $table.bootstrapTable('scrollTo', {unit: 'rows', value: rowElem.data('index')})
         rowElem.css('background-color','lightgreen')
+        $('#scanModal-title').html(
+          '<h2>'+row.name+'</h2><br /><img src="'+row.avatar+'" style="width:100%"></img>'
+        )
+        $('#scanModal').modal('show')
+        setTimeout(function() {$('#scanModal').modal('hide');}, 1200);
       }
     } else {
       console.log("could not find row by ", pID)

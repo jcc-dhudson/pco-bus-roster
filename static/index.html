@@ -35,16 +35,31 @@
           </div>
         </div>
       </div>
+      <div class="modal fade" id="scanModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header  d-block text-center">
+              <h5 class="modal-title" id="scanModal-title">Scan</h5>
+            </div>
+            <div id="scanModal-body" class="modal-body">
+                
+            </div>
+            <div class="modal-footer" id="scanModal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="modal fade" id="scanPermissionModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title" id="omnimodal-title">Allow NFC Permission</h5>
+              <h5 class="modal-title" id="scanPermissionModal-title">Allow NFC Permission</h5>
             </div>
-            <div id="omnimodal-body" class="modal-body">
+            <div id="scanPermissionModal-body" class="modal-body">
                 Please click allow below to allow NFC permissions
             </div>
-            <div class="modal-footer" id="omnimodal-footer">
+            <div class="modal-footer" id="scanPermissionModal-footer">
               <button type="button" id="scanAllow" onclick="startScanning();" class="btn btn-secondary" data-bs-dismiss="modal">Allow</button>
             </div>
           </div>
