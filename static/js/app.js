@@ -10,7 +10,6 @@ const options = {
   second: "2-digit"
 };
 const mapView = new ol.View({
-  center: [0, 0],
   zoom: 13,
 });
 var map = new ol.Map({
@@ -21,6 +20,21 @@ var map = new ol.Map({
   }) ],
   view: mapView
 })
+const textStyle = new ol.style.Style({
+  text: new ol.style.Text({
+      font: '12px Calibri,sans-serif',
+      fill: new ol.style.Fill({
+          color:'#000'
+      }),
+      stroke: new ol.style.Stroke({
+          color:'#fff',
+          width:3
+      }),
+      textAlign:'left',
+      offsetX:2
+  })
+});
+
 if( 'NDEFReader' in window){
   const ndef = new NDEFReader();
   ndef.scan().then(() => {
@@ -105,7 +119,9 @@ window.operateStatus = {
   'click .status': function (e, value, row, index) {
     //$('#omnimodal-body').html('')
     $('#omnimodal-title').html(row.name + ' @ ' + row.status)
-    mapView.centerOn(ol.proj.fromLonLat([row.location.longitude, row.location.latitude]), map.getSize(), [0, 0])
+    
+    // ** need to delete other points maybe?
+    textStyle.getText().setText(row.name)
     map.addLayer(
       pointLayer = new ol.layer.Vector({
         source: new ol.source.Vector({
@@ -113,10 +129,27 @@ window.operateStatus = {
                 new ol.Feature({
                     geometry: new ol.geom.Point(ol.proj.fromLonLat([row.location.longitude, row.location.latitude]))
                 })
-            ]
+            ],
         })
       })
     );
+    map.addLayer(
+      pointName = new ol.layer.Vector({
+        source: new ol.source.Vector({
+            features: [
+              new ol.Feature({
+                geometry: new ol.geom.Point(ol.proj.fromLonLat([row.location.longitude, row.location.latitude]))
+            })
+            ]
+        }),
+        visible: true,
+        title: row.name,
+        style: textStyle
+      })
+    )
+    mapView.centerOn(ol.proj.fromLonLat([0, 0]), map.getSize(), [0, 0])
+    map.setSize([466, 400]);
+    mapView.centerOn(ol.proj.fromLonLat([row.location.longitude, row.location.latitude]), map.getSize(), [233, 200])
     $('#omnimodal').modal('show')
   }
 }
