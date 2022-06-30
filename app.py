@@ -107,6 +107,7 @@ def list(refresh=False):
         ws.send_to_all(content_type="application/json", message={'refresh': True})
         curSession = datetime.now(timezone('UTC')).timestamp()
     return jsonify(app.list)
+    
 
 @app.route('/checkin', methods = ['POST'])
 def checkin():

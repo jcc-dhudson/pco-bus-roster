@@ -147,6 +147,7 @@ window.operateStatus = {
         style: textStyle
       })
     )
+    
     mapView.centerOn(ol.proj.fromLonLat([0, 0]), map.getSize(), [0, 0])
     map.setSize([466, 400]);
     mapView.centerOn(ol.proj.fromLonLat([row.location.longitude, row.location.latitude]), map.getSize(), [233, 200])
