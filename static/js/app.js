@@ -22,27 +22,6 @@ var map = new ol.Map({
 })
 
 
-
-function startScanning(){
-  const ndef = new NDEFReader();
-  ndef.scan().then(() => {
-    console.log("Scan started successfully.");
-    ndef.onreadingerror = () => {
-      console.log("Cannot read data from the NFC tag. Try another one?");
-    };
-    ndef.onreading = event => {
-      const message = event.message;
-      for (const record of message.records) {
-        console.log(record)
-        // postCheckin(record.message)
-      }
-    };
-  }).catch(error => {
-    console.log(`Error! Scan failed to start: ${error}.`);
-  });
-}
-
-
 //
 // when the check-in button is clicked
 //
@@ -115,7 +94,6 @@ window.operateStatus = {
 
 $('#omnimodal').on('shown.bs.modal', event => {
   map.updateSize();
-  $('#scanPermissionModal').modal('show')
 })
 
 //
@@ -208,6 +186,24 @@ if ('NDEFReader' in window) {
   })
 } else {
   console.log('no NDEFReader')
+}
+function startScanning(){
+  const ndef = new NDEFReader();
+  ndef.scan().then(() => {
+    console.log("Scan started successfully.");
+    ndef.onreadingerror = () => {
+      console.log("Cannot read data from the NFC tag. Try another one?");
+    };
+    ndef.onreading = event => {
+      const message = event.message;
+      for (const record of message.records) {
+        console.log(record)
+        // postCheckin(record.message)
+      }
+    };
+  }).catch(error => {
+    console.log(`Error! Scan failed to start: ${error}.`);
+  });
 }
 
 function drawPoint(latitude, longitude, label) {
