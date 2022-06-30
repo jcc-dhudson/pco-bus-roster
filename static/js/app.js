@@ -87,16 +87,15 @@ window.operateEvents = {
       postCheckin(row.id, false)
   }
 }
-  //
-  // when a check-in status message is clicked:
-  //
+//
+// when a check-in status message is clicked:
+//
 window.operateStatus = {
   'click .status': function (e, value, row, index) {
     //$('#omnimodal-body').html('')
     $('#omnimodal-title').html(row.name + ' @ ' + row.status)
+    $('#omnimodal-delete').data('delete-id', row.id)
     
-    // ** need to delete other points maybe?
-    map.setSize([466, 400]);
     mapView.centerOn(ol.proj.fromLonLat([row.location.longitude, row.location.latitude]), map.getSize(), [233, 200])
     $('#omnimodal').modal('show')
   }
@@ -120,7 +119,7 @@ function actionFormatter(value, row, index) {
 }
 function statusFormatter(value, row, index) {
   if(value != undefined){
-    if( 'location' in row && row.location.latitude != 0 ) {
+    if( 'location' in row  ) {
       drawPoint(row.location.latitude, row.location.longitude, row.name)
       return '<a class="table-action status" href="javascript:void(0)">'+ value + '</a>'
     } else {
@@ -151,6 +150,12 @@ $alertBtn.click(function () {
   $.get("/list?refresh=true", function(data, status){
       $table.bootstrapTable('load', data)
   });
+})
+
+$('#omnimodal-delete').click(function() {
+  id = $('#omnimodal-delete').data('delete-id')
+  $.ajax('/events/' + id, { type : 'DELETE' });
+  $('#omnimodal').modal('hide')
 })
 
 

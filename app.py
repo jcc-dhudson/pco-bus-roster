@@ -7,7 +7,6 @@ from pytz import timezone
 from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template, request, send_from_directory, session, redirect
 from requests_oauth2 import OAuth2BearerToken, OAuth2
-#from flask_socketio import SocketIO, emit, send
 from azure.messaging.webpubsubservice import WebPubSubServiceClient
 from azure.cosmos import CosmosClient
 
@@ -150,24 +149,54 @@ def checkin():
     container.upsert_item(checkinObj)
     return f"ok. {data['id']}"
 
-@app.route('/events', methods = ['GET'])
-def events_list():
+@app.route('/events/<id>', methods = ['GET', 'DELETE'])
+def events_list(id=None):
     if not session.get("access_token") or session.get("access_token") not in app.users:
         if not DEBUG:
             return redirect("/auth/callback")
-    events = []
-    if request.args.get('session') is not None:
-        qObj = {
-            'query': f'SELECT * FROM {CONTAINER_NAME} e where e.session = @session',
-            'parameters': [
-                { 'name': '@session', 'value': request.args.get('session') }
-            ]
-        }
-    else:
-        qObj = { 'query': f'SELECT * FROM {CONTAINER_NAME} e' }
-    for event in container.query_items(qObj, enable_cross_partition_query=True):
-        events.append(event)
-    return jsonify(events)
+    if request.method == 'GET':
+        events = []
+        if request.args.get('session') is not None:
+            qObj = {
+                'query': f'SELECT * FROM {CONTAINER_NAME} e where e.session = @session',
+                'parameters': [
+                    { 'name': '@session', 'value': request.args.get('session') }
+                ]
+            }
+        else:
+            qObj = { 'query': f'SELECT * FROM {CONTAINER_NAME} e' }
+        for event in container.query_items(qObj, enable_cross_partition_query=True):
+            events.append(event)
+        return jsonify(events)
+    elif request.method == 'DELETE':
+        if id is not None:
+            qObj = {
+                'query': f'SELECT * FROM {CONTAINER_NAME} e WHERE e.session = @session and e.person_id = @person_id',
+                'parameters': [
+                    { 'name': '@session', 'value': str(curSession) },
+                    { 'name': '@person_id', 'value': id } 
+                ]
+            }
+            print(f'SELECT * FROM {CONTAINER_NAME} e WHERE e.person_id = "{id}"')
+            deletedCount = 0
+            items = []
+            for event in container.query_items(qObj, enable_cross_partition_query=True):
+                for item in app.list:
+                    if item['id'] == event['person_id']:
+                        item['status'] = None
+                        item['location'] = {}
+                    items.append(item)
+                    ws.send_to_all(content_type="application/json", message=item)
+
+                response = container.delete_item(item=event['id'], partition_key=event['id'])
+                deletedCount += 1
+            if deletedCount > 0:
+                app.list = items
+                #ws.send_to_all(content_type="application/json", message={'refresh': True})
+                
+            return(f'deleted {deletedCount} items')
+    return(f'must supply an id for deletes {id}', 500)
+        
 
 @app.route("/pco/")
 def pco_index():
