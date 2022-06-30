@@ -22,8 +22,9 @@ var map = new ol.Map({
 })
 
 
-if( 'NDEFReader' in window){
+if ('NDEFReader' in window) {
   const ndef = new NDEFReader();
+  console.log(ndef)
   ndef.scan().then(() => {
     console.log("Scan started successfully.");
     ndef.onreadingerror = () => {
