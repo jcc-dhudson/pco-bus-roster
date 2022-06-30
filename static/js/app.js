@@ -153,7 +153,6 @@ $.get("/negotiate", function(data, status){
   ws = new WebSocket(data.url, protocols='json.webpubsub.azure.v1');
   ws.onmessage = event => {
     data = JSON.parse(event.data);
-    console.log(data.data)
     if (data.type == "message") {
       if( 'person_id' in data.data ) {
         console.log( data.data.person_id + ' ' + data.data.status )
@@ -199,11 +198,8 @@ function startScanning(){
       console.log("Cannot read data from the NFC tag. Try another one?");
     };
     ndef.onreading = event => {
-      const message = event.message;
-      for (const record of message.records) {
-        console.log(record)
-        // postCheckin(record.message)
-      }
+      const textDecoder = new TextDecoder(event.encoding);
+      console.log(`Text: ${textDecoder.decode(event.data)} (${event.lang})`);
     };
   }).catch(error => {
     console.log(`Error! Scan failed to start: ${error}.`);
