@@ -174,20 +174,24 @@ $.get("/negotiate", function(data, status){
 });
 
 if ('NDEFReader' in window) {
-  navigator.permissions.query({ name: "nfc" }).then(function(nfcPermissionStatus) {;
+  navigator.permissions.query({ name: "nfc" }).then(function(nfcPermissionStatus) {
     if (nfcPermissionStatus.state === "granted") {
       startScanning();
     } else {
       $('#scanPermissionModal').modal('show')
-      $("#scanAllow").onclick = event => {
-        startScanning();
-      };
+
     }
   })
 } else {
   console.log('no NDEFReader')
 }
+$('#scanAllow').on('shown.bs.modal', event => {
+  $("#scanAllow").onclick = event => {
+    startScanning();
+  };
+})
 function startScanning(){
+  console.log("start scanning called")
   const ndef = new NDEFReader();
   ndef.scan().then(() => {
     console.log("Scan started successfully.");
