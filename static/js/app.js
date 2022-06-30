@@ -25,7 +25,7 @@ var map = new ol.Map({
 //
 // when the check-in button is clicked
 //
-function postCheckin(pID) {
+function postCheckin(pID, scroll=false) {
   navigator.geolocation.getCurrentPosition((gpsLoc) => {
     userLocation = {
       'latitude': gpsLoc.coords.latitude,
@@ -42,6 +42,11 @@ function postCheckin(pID) {
         contentType : 'application/json',
         type : 'POST',
       })
+      if(scroll){
+        rowElem = $('*[data-uniqueid='+ row.id +']')
+        rowElem.css('background-color','lightgreen')
+        $table.bootstrapTable('scrollTo', rowElem.data('index'))
+      }
     } else {
       console.log("could not find row by ", pID)
     }
@@ -73,8 +78,7 @@ window.operateEvents = {
       row: {
         actions: 'blank'
       }})
-      postCheckin(row.id)
-      console.log(row.id)
+      postCheckin(row.id, false)
   }
 }
   //
@@ -91,10 +95,6 @@ window.operateStatus = {
     $('#omnimodal').modal('show')
   }
 }
-
-$('#omnimodal').on('shown.bs.modal', event => {
-  map.updateSize();
-})
 
 //
 // table formatters
@@ -202,7 +202,7 @@ function startScanning(){
         console.log(record)
         const textDecoder = new TextDecoder(record.encoding);
         console.log(`Text: ${textDecoder.decode(record.data)} (${record.lang})`);
-        postCheckin(textDecoder.decode(record.data))
+        postCheckin(textDecoder.decode(record.data), true)
       }
     };
   }).catch(error => {
