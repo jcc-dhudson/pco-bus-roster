@@ -35,7 +35,7 @@ function postCheckin(pID) {
       'speed': gpsLoc.coords.speed
     }
     row = $table.bootstrapTable('getRowByUniqueId', pID)
-    if(row.id != undefined) {
+    if(row != undefined) {
       postObj = {'id': row.id, 'name': row.name, 'location': userLocation}
       $.ajax('/checkin', {
         data : JSON.stringify(postObj),
@@ -199,6 +199,7 @@ function startScanning(){
     };
     ndef.onreading = event => {
       for (const record of message.records) {
+        console.log(record)
         const textDecoder = new TextDecoder(record.encoding);
         console.log(`Text: ${textDecoder.decode(record.data)} (${record.lang})`);
         postCheckin(textDecoder.decode(record.data))
