@@ -22,9 +22,9 @@ var map = new ol.Map({
 })
 
 
-if ('NDEFReader' in window) {
+
+function startScanning(){
   const ndef = new NDEFReader();
-  console.log(ndef)
   ndef.scan().then(() => {
     console.log("Scan started successfully.");
     ndef.onreadingerror = () => {
@@ -40,8 +40,6 @@ if ('NDEFReader' in window) {
   }).catch(error => {
     console.log(`Error! Scan failed to start: ${error}.`);
   });
-} else {
-  console.log('no NDEFReader available, not scanning NFC')
 }
 
 
@@ -117,6 +115,7 @@ window.operateStatus = {
 
 $('#omnimodal').on('shown.bs.modal', event => {
   map.updateSize();
+  $('#scanPermissionModal').modal('show')
 })
 
 //
@@ -195,6 +194,21 @@ $.get("/negotiate", function(data, status){
     }
   };
 });
+
+if ('NDEFReader' in window) {
+  navigator.permissions.query({ name: "nfc" }).then(function(nfcPermissionStatus) {;
+    if (nfcPermissionStatus.state === "granted") {
+      startScanning();
+    } else {
+      $('#scanPermissionModal').modal('show')
+      $("#scanAllow").onclick = event => {
+        startScanning();
+      };
+    }
+  })
+} else {
+  console.log('no NDEFReader')
+}
 
 function drawPoint(latitude, longitude, label) {
   map.addLayer(
