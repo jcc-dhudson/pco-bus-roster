@@ -95,7 +95,7 @@ window.operateStatus = {
     //$('#omnimodal-body').html('')
     $('#omnimodal-title').html(row.name + ' @ ' + row.status)
     $('#omnimodal-delete').data('delete-id', row.id)
-    
+    map.setSize([466, 400]);
     mapView.centerOn(ol.proj.fromLonLat([row.location.longitude, row.location.latitude]), map.getSize(), [233, 200])
     $('#omnimodal').modal('show')
     
@@ -103,6 +103,7 @@ window.operateStatus = {
 }
 $('#omnimodal').on('show.bs.modal', function () {
   map.updateSize();
+  console.log(map)
 })
 
 //
@@ -124,7 +125,9 @@ function actionFormatter(value, row, index) {
 function statusFormatter(value, row, index) {
   if(value != undefined){
     if( 'location' in row  ) {
-      drawPoint(row.location.latitude, row.location.longitude, row.name)
+      if (row.location.latitude != 0) {
+        drawPoint(row.location.latitude, row.location.longitude, row.name)
+      }
       return '<a class="table-action status" href="javascript:void(0)">'+ value + '</a>'
     } else {
       return value

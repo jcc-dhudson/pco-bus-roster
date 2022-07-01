@@ -185,8 +185,8 @@ def events_list(id=None):
                     if item['id'] == event['person_id']:
                         item['status'] = None
                         item['location'] = {}
+                        item['person_id'] = item['id']
                         ws.send_to_all(content_type="application/json", message=item)
-                    item['person_id'] = item['id']
                     items.append(item)
                     
                 response = container.delete_item(item=event['id'], partition_key=event['id'])
