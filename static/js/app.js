@@ -98,8 +98,12 @@ window.operateStatus = {
     
     mapView.centerOn(ol.proj.fromLonLat([row.location.longitude, row.location.latitude]), map.getSize(), [233, 200])
     $('#omnimodal').modal('show')
+    
   }
 }
+$('#omnimodal').on('show.bs.modal', function () {
+  map.updateSize();
+})
 
 //
 // table formatters
