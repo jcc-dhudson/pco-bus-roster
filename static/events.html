@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <meta name="description" content="" />
     <meta name="author" content="" />
-    <title>Bus Roster</title>
+    <title>Bus Roster - WRITE</title>
     <link rel="icon" type="image/x-icon" href="img/favicon.ico" />
     <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.20.2/dist/bootstrap-table.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.14.1/css/ol.css">
@@ -20,52 +20,22 @@
     <link href="css/style.css" rel="stylesheet" />
 </head>
 <body id="page-top">
-    <div class="modal fade" id="omnimodal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="omnimodal-title">Modal title</h5>
-            </div>
-            <div id="omnimodal-body" class="modal-body">
-                <div id="map" class="map" style="width:100%;height:400px"></div>
-            </div>
-            <div class="modal-footer" id="omnimodal-footer">
-              <button type="button" id="omnimodal-delete" class="btn btn-secondary" data-bs-dismiss="modal">Delete Check-In</button>
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-          </div>
+  <div class="modal fade" id="omnimodal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="omnimodal-title">Modal title</h5>
+        </div>
+        <div id="omnimodal-body" class="modal-body">
+            <div id="map" class="map" style="width:100%;height:400px"></div>
+        </div>
+        <div class="modal-footer" id="omnimodal-footer">
+          <button type="button" id="omnimodal-delete" class="btn btn-secondary" data-bs-dismiss="modal">Delete Check-In</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         </div>
       </div>
-      <div class="modal fade" id="scanModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header  d-block text-center">
-              <h5 class="modal-title" id="scanModal-title">Scan</h5>
-            </div>
-            <div id="scanModal-body" class="modal-body">
-                
-            </div>
-            <div class="modal-footer" id="scanModal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="modal fade" id="scanPermissionModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="scanPermissionModal-title">Allow NFC Permission</h5>
-            </div>
-            <div id="scanPermissionModal-body" class="modal-body">
-                Please click allow below to allow NFC permissions
-            </div>
-            <div class="modal-footer" id="scanPermissionModal-footer">
-              <button type="button" id="scanAllow" onclick="startScanning();" class="btn btn-secondary" data-bs-dismiss="modal">Allow</button>
-            </div>
-          </div>
-        </div>
-      </div>
+    </div>
+  </div>
       <div class="modal fade" id="menuModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog">
           <div class="modal-content">
@@ -87,19 +57,20 @@
         </div>
       </div>
 
-    <div class="fresh-table full-screen-table toolbar-color-orange">
+    <div class="fresh-table full-screen-table toolbar-color-red">
         <!--    Available colors for the full background: full-color-blue, full-color-azure, full-color-green, full-color-red, full-color-orange
                 Available colors only for the toolbar: toolbar-color-blue, toolbar-color-azure, toolbar-color-green, toolbar-color-red, toolbar-color-orange
         -->
         <div class="toolbar">
-            <button id="alertBtn" class="btn btn-default"><i class="fa-solid fa-bars"></i> Menu</button>
+          <button id="alertBtn" class="btn btn-default"><i class="fa-solid fa-bars"></i> Menu</button>
         </div>
-            <table id="fresh-table" class="table" data-url="/list">
+            <table id="fresh-table" class="table" data-url="/events">
                 <thead>
-                    <th data-field="actions" data-formatter="actionFormatter" data-events="operateEvents">Actions</th>
-                    <th data-field="avatar" data-formatter="avatarFormatter" data-sortable="false">Avatar</th>
-                    <th data-field="name" data-sortable="true">Name</th>
-                    <th data-field="status" data-formatter="statusFormatter" data-events="operateStatus" data-sortable="true">Status</th>
+                    <th data-field="person_name" data-sortable="true">Name</th>
+                    <th data-field="datetime" data-formatter="timeFormatter" data-sortable="true">Time</th>
+                    <th data-field="by_name" data-sortable="true">Checked-In By</th>
+                    <th data-field="session" data-formatter="sessionFormatter" data-events="setSearch" data-sortable="true">Session</th>
+                    <th data-field="location" data-formatter="locationFormatter" data-events="operateStatus" data-sortable="true">Map</th>
                 </thead>
                 <tbody>
                     
@@ -111,6 +82,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/bootstrap-table@1.20.2/dist/bootstrap-table.min.js"></script>
     <script src="js/nav.js"></script>
-    <script src="js/app.js"></script>
+    <script src="js/events.js"></script>
 </body>
 </html>

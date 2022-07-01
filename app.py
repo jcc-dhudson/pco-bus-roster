@@ -74,6 +74,34 @@ def index():
     user = app.users[session.get("access_token")]
     return app.send_static_file('index.html')
 
+@app.route('/write')
+def writePage():
+    if not session.get("access_token") or session.get("access_token") not in app.users:
+        return redirect("/auth/callback")
+    user = app.users[session.get("access_token")]
+    return app.send_static_file('writetags.html')
+
+@app.route('/eventview')
+def eventPage():
+    if not session.get("access_token") or session.get("access_token") not in app.users:
+        return redirect("/auth/callback")
+    user = app.users[session.get("access_token")]
+    return app.send_static_file('events.html')
+
+@app.route('/writetag', methods = ['POST'])
+def writeTag():
+    if not session.get("access_token") or session.get("access_token") not in app.users:
+        return redirect("/auth/callback")
+    user = app.users[session.get("access_token")]
+    data = request.json
+    tagObj = {
+        'channel': 'tags',
+        'by_name': user['name'],
+        'tagsCompleted': data['tagsCompleted']
+    }
+    ws.send_to_all(content_type="application/json", message=tagObj)
+    return f"ok."
+
 @app.route('/auth/me')
 def auth_me():
     if not session.get("access_token") or session.get("access_token") not in app.users:
@@ -105,6 +133,8 @@ def list(refresh=False):
         app.list = getList()
         ws.send_to_all(content_type="application/json", message={'refresh': True})
         curSession = datetime.now(timezone('UTC')).timestamp()
+    if request.args.get('noStatus') is not None and request.args.get('noStatus') == 'true':
+        return jsonify(getList())
     return jsonify(app.list)
     
 
@@ -132,7 +162,8 @@ def checkin():
         'location': data['location'],
         'status': statusLine,
         'datetime': now_utc.timestamp(),
-        'session': str(curSession)
+        'session': str(curSession),
+        'type': 'checkin'
     }
 
     ws.send_to_all(content_type="application/json", message=checkinObj)
@@ -148,6 +179,24 @@ def checkin():
     
     container.upsert_item(checkinObj)
     return f"ok. {data['id']}"
+
+@app.route('/events', methods = ['GET'])
+def events_all(id=None):
+    if not session.get("access_token") or session.get("access_token") not in app.users:
+        return redirect("/auth/callback")
+    events = []
+    if request.args.get('session') is not None:
+        qObj = {
+            'query': f'SELECT * FROM {CONTAINER_NAME} e where e.session = @session',
+            'parameters': [
+                { 'name': '@session', 'value': request.args.get('session') }
+            ]
+        }
+    else:
+        qObj = { 'query': f'SELECT * FROM {CONTAINER_NAME} e' }
+    for event in container.query_items(qObj, enable_cross_partition_query=True):
+        events.append(event)
+    return jsonify(events)
 
 @app.route('/events/<id>', methods = ['GET', 'DELETE'])
 def events_list(id=None):

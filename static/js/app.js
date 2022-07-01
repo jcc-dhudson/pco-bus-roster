@@ -1,6 +1,5 @@
 
 var $table = $('#fresh-table')
-var $alertBtn = $('#alertBtn')
 var userLocation = {}
 const options = {
   timeZone:"US/Eastern",
@@ -144,11 +143,6 @@ $(function () {
   })
 })
 
-$alertBtn.click(function () {
-  $.get("/list?refresh=true", function(data, status){
-      $table.bootstrapTable('load', data)
-  });
-})
 $('#omnimodal-delete').click(function() {
   id = $('#omnimodal-delete').data('delete-id')
   $.ajax('/events/' + id, { type : 'DELETE' });
@@ -156,12 +150,14 @@ $('#omnimodal-delete').click(function() {
 })
 
 
+
+
 var ws
 $.get("/negotiate", function(data, status){
   ws = new WebSocket(data.url, protocols='json.webpubsub.azure.v1');
   ws.onmessage = event => {
     data = JSON.parse(event.data);
-    if (data.type == "message") {
+    if (data.type == "message" && data.from == "server") {
       if( 'person_id' in data.data ) {
         console.log( data.data.person_id + ' ' + data.data.status )
         $table.bootstrapTable('updateByUniqueId', {
