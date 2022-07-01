@@ -183,6 +183,7 @@ def events_list(id=None):
             for event in container.query_items(qObj, enable_cross_partition_query=True):
                 for item in app.list:
                     if item['id'] == event['person_id']:
+                        item.pop('status', None)
                         item['status'] = None
                         item['location'] = {}
                         item['person_id'] = item['id']

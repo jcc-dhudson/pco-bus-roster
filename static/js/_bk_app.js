@@ -87,38 +87,47 @@ window.operateEvents = {
       postCheckin(row.id, false)
   }
 }
-  //
-  // when a check-in status message is clicked:
-  //
+//
+// when a check-in status message is clicked:
+//
 window.operateStatus = {
   'click .status': function (e, value, row, index) {
     //$('#omnimodal-body').html('')
     $('#omnimodal-title').html(row.name + ' @ ' + row.status)
     $('#omnimodal-delete').data('delete-id', row.id)
-    // ** need to delete other points maybe?
     map.setSize([466, 400]);
     mapView.centerOn(ol.proj.fromLonLat([row.location.longitude, row.location.latitude]), map.getSize(), [233, 200])
     $('#omnimodal').modal('show')
+    
   }
 }
+$('#omnimodal').on('show.bs.modal', function () {
+  map.updateSize();
+  console.log(map)
+})
 
 //
 // table formatters
 //
 function actionFormatter(value, row, index) {
-  if(row.status === undefined || row.status === null) {
-    return [
-      '<a rel="tooltip" title="Checkin" class="table-action checkin" href="javascript:void(0)" title="Like">',
-        '<i style="font-size: 60px" class="fa-solid fa-circle-check"></i>',
-      '</a>'
-    ].join('')
+  if(value == 'blank'){
+    return ' '
   }
-  return ' '
+  if(row.status != undefined) {
+    return ' '
+  }
+  return [
+    '<a rel="tooltip" title="Checkin" class="table-action checkin" href="javascript:void(0)" title="Like">',
+      '<i style="font-size: 60px" class="fa-solid fa-circle-check"></i>',
+    '</a>'
+  ].join('')
 }
 function statusFormatter(value, row, index) {
   if(value != undefined){
-    if( 'location' in row && row.location.latitude != 0 ) {
-      drawPoint(row.location.latitude, row.location.longitude, row.name)
+    if( 'location' in row  ) {
+      if (row.location.latitude != 0) {
+        drawPoint(row.location.latitude, row.location.longitude, row.name)
+      }
       return '<a class="table-action status" href="javascript:void(0)">'+ value + '</a>'
     } else {
       return value
@@ -149,6 +158,7 @@ $alertBtn.click(function () {
       $table.bootstrapTable('load', data)
   });
 })
+
 $('#omnimodal-delete').click(function() {
   id = $('#omnimodal-delete').data('delete-id')
   $.ajax('/events/' + id, { type : 'DELETE' });
@@ -179,8 +189,6 @@ $.get("/negotiate", function(data, status){
     }
   };
 });
-
-
 
 if ('NDEFReader' in window) {
   navigator.permissions.query({ name: "nfc" }).then(function(nfcPermissionStatus) {
