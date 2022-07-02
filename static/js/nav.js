@@ -10,6 +10,9 @@ $('#nav-writeTags').click(function(){
 $('#nav-viewEvents').click(function(){
     window.location.href = '/eventview';
 })
+$('#nav-myGroup').click(function(){
+    window.location.href = '/mygroup';
+})
 $('#nav-restart').click(function(){
     $.get("/list?refresh=true", function(data, status){
             $table.bootstrapTable('load', data)

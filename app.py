@@ -63,6 +63,7 @@ app.list = []
 cosmos = CosmosClient(COSMOS_URL, credential=COSMOS_KEY)
 database = cosmos.get_database_client(DATABASE_NAME)
 container = database.get_container_client(CONTAINER_NAME)
+groupsContainer = database.get_container_client('groups')
 
 pco = pypco.PCO(PCO_APP_ID, PCO_SECRET)
 ws = WebPubSubServiceClient.from_connection_string(connection_string=PUBSUB_CONNECTION_STRING, hub='hub')
@@ -87,6 +88,13 @@ def eventPage():
         return redirect("/auth/callback")
     user = app.users[session.get("access_token")]
     return app.send_static_file('events.html')
+
+@app.route('/mygroup')
+def mygroupPage():
+    if not session.get("access_token") or session.get("access_token") not in app.users:
+        return redirect("/auth/callback")
+    user = app.users[session.get("access_token")]
+    return app.send_static_file('mygroup.html')
 
 @app.route('/writetag', methods = ['POST'])
 def writeTag():
@@ -247,6 +255,42 @@ def events_list(id=None):
                 
             return(f'deleted {deletedCount} items')
     return(f'must supply an id for deletes {id}', 500)
+
+@app.route('/groups', methods = ['GET'])
+def groupList():
+    if not session.get("access_token") or session.get("access_token") not in app.users:
+        return redirect("/auth/callback")
+    user = app.users[session.get("access_token")]
+
+    query_results = groupsContainer.query_items(f"SELECT * FROM groups g WHERE g.id = \"{user['id']}\"", enable_cross_partition_query=True)
+    items = []
+    for item in query_results:
+        items = item['members']
+    if(len(items) > 0):
+        return jsonify({'members': items})
+    else:
+        return("not found for user", 404)
+
+@app.route('/groups', methods = ['POST'])
+def groupPost():
+    if not session.get("access_token") or session.get("access_token") not in app.users:
+        return redirect("/auth/callback")
+    user = app.users[session.get("access_token")]
+    data = request.json
+    print(data['members'])
+    membersObj = {
+        'id': user['id'],
+        'members': data['members']
+    }
+    query_results = groupsContainer.query_items(f"SELECT * FROM groups g WHERE g.id = \"{user['id']}\"", enable_cross_partition_query=True)
+    items = []
+    for item in query_results:
+        groupsContainer.replace_item(item=item, body=membersObj)
+    if(len(items) == 0):
+        print(membersObj)
+        groupsContainer.upsert_item(membersObj)
+        
+    return f"ok."
         
 
 @app.route("/pco/")
