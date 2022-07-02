@@ -137,13 +137,27 @@ def list(refresh=False):
     if not session.get("access_token") or session.get("access_token") not in app.users:
         if not DEBUG:
             return redirect("/auth/callback")
+    user = app.users[session.get("access_token")]
     if request.args.get('refresh') is not None and request.args.get('refresh') == 'true':
         app.list = getList()
         ws.send_to_all(content_type="application/json", message={'refresh': True})
         curSession = datetime.now(timezone('UTC')).timestamp()
+
     if request.args.get('noStatus') is not None and request.args.get('noStatus') == 'true':
         return jsonify(getList())
-    return jsonify(app.list)
+    group_results = groupsContainer.query_items(f"SELECT * FROM groups g WHERE g.id = \"{user['id']}\"", enable_cross_partition_query=True)
+    members = []
+    outList = []
+    for group in group_results:
+        for member in group['members']:
+            members.append(member)
+    for pers in app.list:
+        pers['sortby'] = pers['name']
+        if pers['id'] in members:
+            pers['sortby'] = '_' + pers['name']
+        outList.append(pers)
+
+    return jsonify(outList)
     
 
 @app.route('/checkin', methods = ['POST'])

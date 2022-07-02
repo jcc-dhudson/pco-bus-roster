@@ -124,6 +124,12 @@ function statusFormatter(value, row, index) {
     }
   }
 }
+function nameFormatter(value, row, index) {
+  if( row.sortby.slice(0, 1) == '_' ){
+    return '<b>'+value+'</b>'
+  }
+  return value
+}
 function avatarFormatter(value, row, index) {
   return [
     '<img src="' + row.avatar + '" width="72px"/>'
@@ -139,7 +145,9 @@ $(function () {
     pagination: false,
     striped: true,
     sortable: true,
-    uniqueId: "id"
+    uniqueId: "id",
+    sortName: "sortby",
+    sortOrder: "asc",
   })
 })
 

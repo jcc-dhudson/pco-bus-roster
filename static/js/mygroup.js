@@ -86,13 +86,10 @@ function loadGroups() {
         console.log(data.members)
         myGroupMembers = data.members
         data.members.forEach(function(m){
-            console.log(m)
-            console.log($table.bootstrapTable('getRowByUniqueId', m))
             $table.bootstrapTable('updateByUniqueId', {
                 id: m,
                 row: {
                     inMyGroup: true,
-                    name: 'test'
                 }
             })
         })
