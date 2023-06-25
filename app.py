@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template, request, send_from_directory, session, redirect
 from requests_oauth2 import OAuth2BearerToken, OAuth2
 from azure.messaging.webpubsubservice import WebPubSubServiceClient
-from azure.communication.sms import SmsClient
+#from azure.communication.sms import SmsClient
 from azure.cosmos import CosmosClient
 
 LIST_ID = '2287128'
@@ -43,7 +43,7 @@ try:
     PUBSUB_CONNECTION_STRING = os.environ['PUBSUB_CONNECTION_STRING']
     COSMOS_URL = os.environ['COSMOS_URL']
     COSMOS_KEY = os.environ['COSMOS_KEY']
-    SMS_CONNECTION_STRING = os.environ['SMS_CONNECTION_STRING']
+    #SMS_CONNECTION_STRING = os.environ['SMS_CONNECTION_STRING']
     FROM_PHONE = os.environ['FROM_PHONE']
 except Exception as e:
     print(f"Must supply PCO_APP_ID, PCO_SECRET, PCO_OAUTH_CLIEND_ID, COSMOS_KEY, COSMOS_URL, PCO_OAUTH_SECRET, PUBSUB_CONNECTION_STRING as environment vairables. - {e}")
@@ -56,7 +56,7 @@ pco_auth = PlanningCenterClient(
     redirect_uri= SELF_BASE_URL + '/auth/callback'
 )
 
-sms_client = SmsClient.from_connection_string(SMS_CONNECTION_STRING, logging_enable=False)
+#sms_client = SmsClient.from_connection_string(SMS_CONNECTION_STRING, logging_enable=False)
 
 app = Flask(__name__,
             static_url_path='', 
