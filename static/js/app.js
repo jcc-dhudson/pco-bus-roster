@@ -1,4 +1,4 @@
-
+console.log('23-06-25-01')
 var $table = $('#fresh-table')
 var userLocation = {}
 const options = {
