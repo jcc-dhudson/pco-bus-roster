@@ -3,11 +3,13 @@ import sys
 import os
 import pypco
 import requests
+from secrets import token_urlsafe
 from pytz import timezone
 from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template, request, send_from_directory, session, redirect
 from requests_oauth2 import OAuth2BearerToken, OAuth2
 from azure.messaging.webpubsubservice import WebPubSubServiceClient
+from azure.communication.sms import SmsClient
 from azure.cosmos import CosmosClient
 
 LIST_ID = '2287128'
@@ -41,6 +43,8 @@ try:
     PUBSUB_CONNECTION_STRING = os.environ['PUBSUB_CONNECTION_STRING']
     COSMOS_URL = os.environ['COSMOS_URL']
     COSMOS_KEY = os.environ['COSMOS_KEY']
+    SMS_CONNECTION_STRING = os.environ['SMS_CONNECTION_STRING']
+    FROM_PHONE = os.environ['FROM_PHONE']
 except Exception as e:
     print(f"Must supply PCO_APP_ID, PCO_SECRET, PCO_OAUTH_CLIEND_ID, COSMOS_KEY, COSMOS_URL, PCO_OAUTH_SECRET, PUBSUB_CONNECTION_STRING as environment vairables. - {e}")
     sys.exit(1)
@@ -52,12 +56,15 @@ pco_auth = PlanningCenterClient(
     redirect_uri= SELF_BASE_URL + '/auth/callback'
 )
 
+sms_client = SmsClient.from_connection_string(SMS_CONNECTION_STRING, logging_enable=False)
+
 app = Flask(__name__,
             static_url_path='', 
             static_folder='static',)
-app.secret_key = SELF_SESSION_SECRET
+app.secret_key = token_urlsafe()
 app.users = {}
 app.list = []
+app.selfCheckinTokens = {}
 #socketio = SocketIO(app, async_mode='gevent')
 
 cosmos = CosmosClient(COSMOS_URL, credential=COSMOS_KEY)
@@ -72,29 +79,29 @@ ws = WebPubSubServiceClient.from_connection_string(connection_string=PUBSUB_CONN
 def index():
     if not session.get("access_token") or session.get("access_token") not in app.users:
         return redirect("/auth/callback")
-    user = app.users[session.get("access_token")]
     return app.send_static_file('index.html')
 
 @app.route('/write')
 def writePage():
     if not session.get("access_token") or session.get("access_token") not in app.users:
         return redirect("/auth/callback")
-    user = app.users[session.get("access_token")]
     return app.send_static_file('writetags.html')
 
 @app.route('/eventview')
 def eventPage():
     if not session.get("access_token") or session.get("access_token") not in app.users:
         return redirect("/auth/callback")
-    user = app.users[session.get("access_token")]
     return app.send_static_file('events.html')
 
 @app.route('/mygroup')
 def mygroupPage():
     if not session.get("access_token") or session.get("access_token") not in app.users:
         return redirect("/auth/callback")
-    user = app.users[session.get("access_token")]
     return app.send_static_file('mygroup.html')
+
+@app.route('/selfcheckin')
+def selfCheckinPage():
+    return app.send_static_file('selfcheckin.html')
 
 @app.route('/writetag', methods = ['POST'])
 def writeTag():
@@ -173,7 +180,7 @@ def checkin():
         user = app.users[session.get("access_token")]
 
     data = request.json
-    statusLine = f"{checkinTime.strftime('%H:%M:%S')} by {user['name']}"
+    statusLine = f"{checkinTime.strftime('%H:%M')} by {user['name']}"
     checkinObj = {
         'id': data['id'] + "_" + str(now_utc.timestamp()),
         'person_id': data['id'],
@@ -185,6 +192,7 @@ def checkin():
         'status': statusLine,
         'datetime': now_utc.timestamp(),
         'session': str(curSession),
+        'guest': False,
         'type': 'checkin'
     }
 
@@ -201,6 +209,72 @@ def checkin():
     
     container.upsert_item(checkinObj)
     return f"ok. {data['id']}"
+
+@app.route('/selfcheckin', methods = ['POST'])
+def selfcheckin():
+    now_utc = datetime.now(timezone('UTC'))
+    checkinTime = now_utc.astimezone(etc)
+    data = request.json
+
+    if 'selfCheckinToken' in data and data['selfCheckinToken'] in app.selfCheckinTokens:
+        guest = app.selfCheckinTokens[data['selfCheckinToken']]
+        print(guest)
+    else:
+        return "unauthorized", 403
+    
+    statusLine = f"{checkinTime.strftime('%H:%M')} by guest {guest['name']}"
+    checkinObj = {
+        'id': data['id'] + "_" + str(now_utc.timestamp()),
+        'person_id': guest['id'],
+        'person_name': guest['name'],
+        'by_name': guest['name'],
+        'by_id': guest['id'],
+        'by_uri': guest['self'],
+        'location': data['location'],
+        'status': statusLine,
+        'datetime': now_utc.timestamp(),
+        'session': str(curSession),
+        'guest': True,
+        'type': 'checkin'
+    }
+
+
+    newList = []
+    for i in app.list:
+        if i['id'] == data['id']:
+            i['status'] = statusLine
+            i['location'] =  data['location']
+            print(f"guest checked in {data['id']}")
+        newList.append(i)
+    app.list = newList
+    
+    container.upsert_item(checkinObj)
+    return f"ok. {data['id']}"
+
+
+@app.route('/sendselfcheckin', methods = ['POST'])
+def sendSelfCheckin(id=None):
+    if not session.get("access_token") or session.get("access_token") not in app.users:
+        return redirect("/auth/callback")
+    user = app.users[session.get("access_token")]
+    data = request.json
+    for id in data['ids']:
+        phoneResp = pco.get(f"/people/v2/people/{id}/phone_numbers")
+        for phoneResp in phoneResp['data']:
+            phone = phoneResp['attributes']
+            if (phone['location'] == 'Mobile'): # must be a mobile phone number in PCO
+                if(phone['e164'] != 'None'):
+                    for i in app.list:
+                        if i['id'] == id:
+                            person = i
+                    if person:
+                        token = token_urlsafe(8)
+                        app.selfCheckinTokens[token] = person
+                        txt = f"{user['name']} has requested you to check in. Please use this link: "
+                        txt += f"{SELF_BASE_URL}/selfcheckin/{token}"
+                        print(f"{person['name']}: {txt}")
+                        #sms_response = sms_client.send( from_=FROM_PHONE, to=[phone['e164']], message=txt )
+
 
 @app.route('/events', methods = ['GET'])
 def events_all(id=None):
